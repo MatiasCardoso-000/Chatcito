@@ -9,10 +9,13 @@ export const User = sequelize.define(
       allowNull: false,
       unique: true,
     },
-     email: {
+    email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
     bio: {
       type: DataTypes.TEXT,
@@ -21,6 +24,10 @@ export const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    profileImage: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
-  { tableName: "users" }
+  { tableName: "users", timestamps: true }
 );

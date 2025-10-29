@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database";
 
-export const Post = sequelize.define(
-  "Post",
+export const Comment = sequelize.define(
+  "comment",
   {
     content: {
       type: DataTypes.TEXT,
@@ -10,15 +10,6 @@ export const Post = sequelize.define(
     },
   },
   {
-    tableName: "posts",
     timestamps: true,
-    indexes: [
-      {
-        fields: ["UserId"],
-      },
-      {
-        fields: ["createdAt"],
-      },
-    ],
   }
 );
