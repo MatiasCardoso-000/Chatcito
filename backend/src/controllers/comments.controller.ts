@@ -67,42 +67,115 @@ const createComment = async (
 };
 
 const getCommentsByPost = async (req: Request, res: Response) => {
-  const { postId } = req.params;
-  console.log("📌 PostId recibido:", postId);
-  console.log("📌 Tipo:", typeof postId);
-  const comments = await Comment.findAll({
-    where: { PostId: postId },
-    include: [
-      {
+   try {
+    const { postId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: comments } = await Comment.findAndCountAll({
+      where: { PostId: postId },
+      include: [{
         model: User,
-        attributes: ["id", "username", "profileImage"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
-  console.log("📌 Comentarios encontrados:", comments.length);
-  console.log("📌 Datos:", JSON.stringify(comments, null, 2));
-  return res.json({ success: true, data: comments });
+        attributes: ['id', 'username', 'profileImage']
+      }],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    });
+
+    return res.json({
+      success: true,
+      data: comments,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener comentarios"
+    });
+  }
 };
 
 const getCommentsByUser = async (req: AuthRequest, res: Response) => {
-  const userId = req.user!.id;
+  try {
+    const  userId = req.user?.id;
 
-  const comments = await Comment.findAll({
-    where: { UserId: userId },
-    include: [
-      {
-        model: Post,
-        attributes: ["id", "content"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
+    const comments = await Comment.findAll({
+      where: { UserId: userId },
+      include: [
+        {
+          model: Post,
+          attributes: ["id", "content"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "username"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
 
-  return res.json({ success: true, data: comments });
+    return res.json({
+      success: true,
+      data: comments,
+      count: comments.length,
+    });
+  } catch (err) {
+    console.error("Error obteniendo comentarios del usuario:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener comentarios",
+    });
+  }
 };
 
-const updateComment = async (req: Request, res: Response) => {
+// GET 
+const getCommentById = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { commentId } = req.params;
+
+    const comment = await Comment.findByPk(commentId, {
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'username', 'profileImage']
+        },
+        {
+          model: Post,
+          attributes: ['id', 'content']
+        }
+      ]
+    });
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comentario no encontrado"
+      });
+    }
+
+    return res.json({ success: true, data: comment });
+  } catch (err) {
+    console.error("Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener el comentario"
+    });
+  }
+};
+
+
+
+const updateComment = async (req: AuthRequest, res: Response) => {
   try {
     const UserId = req.user?.id;
     const { content } = req.body;
@@ -217,6 +290,7 @@ export const commentsController = {
   createComment,
   getCommentsByPost,
   getCommentsByUser,
+  getCommentById,
   updateComment,
-  deleteComment
+  deleteComment,
 };

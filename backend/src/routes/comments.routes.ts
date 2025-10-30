@@ -4,17 +4,23 @@ import { commentsController } from "../controllers/comments.controller";
 
 export const router = Router();
 
-router.post("/create", validateToken, commentsController.createComment);
+router.post("/", validateToken, commentsController.createComment);
 router.get(
   "/post/:postId/comments",
   validateToken,
   commentsController.getCommentsByPost
 );
 router.get(
-  "/users/userId/comments",
+  "/users/:userId/comments",
   validateToken,
   commentsController.getCommentsByUser
 );
+router.get(
+  "/:commentId",
+  validateToken,
+  commentsController.getCommentById
+);
+
 router.put(
   "/:commentId",
   validateToken,

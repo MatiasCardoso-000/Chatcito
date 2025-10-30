@@ -13,5 +13,11 @@ router.post(
 );
 router.post("/login", validateSchema(loginSchema), userController.login);
 
+router.post(
+  "/users/:userId/follow",
+  validateToken,
+  validateSchema(loginSchema),
+  userController.toggleFollow
+);
 
-router.get("/profile", validateToken, userController.profile)
+router.get("/users/:userId", validateToken, userController.profile);
