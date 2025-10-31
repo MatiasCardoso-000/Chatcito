@@ -43,10 +43,16 @@ const getPosts = async (req: Request, res: Response): Promise<Response> => {
     order: [["createdAt", "DESC"]],
   });
 
-  const postsWithLikes = posts.map((post) => ({
-    ...post.toJSON(),
-    likesCount: post.get("likers")?.length || 0,
-  }));
+  const postsWithLikes = posts.map((post) => {
+    {
+      const likesCount = (post.get("likers") as any[]) || [];
+
+      return {
+        ...post.toJSON(),
+        likesCount: Array.isArray(likesCount) ? likesCount.length : 0,
+      };
+    }
+  });
 
   return res.json({ success: true, data: postsWithLikes });
 };
@@ -136,10 +142,43 @@ const deletePost = async (
 const toggleLike = async (req: AuthRequest, res: Response) => {
   try {
     const { postId } = req.params;
-    const userId = req.user?.id;
+    const likerId = req.user?.id;
+
+    if (!likerId) {
+      return res.status(401).json({
+        success: false,
+        message: "Usuario no autenticado",
+      });
+    }
+
+    const postToLike = await Post.findByPk(postId);
+    if (!postToLike) {
+      return res.status(404).json({
+        success: false,
+        message: "Post no encontrado",
+      });
+    }
+
+    if (postToLike.get("UserId") !== likerId) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    const existingLike = await PostLike.findOne({
+      where: { likerId, postLikedId: postId },
+    });
+
+    let liked = false;
+
+    if (existingLike) {
+      await existingLike.destroy();
+      liked = false;
+    } else {
+      await PostLike.create({ likerId, postLikedId: postId });
+      liked = true;
+    }
 
     const post = await Post.findByPk(postId, {
-      attributes: ["id", "content"],
+      attributes: ["id", "content", "UserId"],
       include: [
         {
           model: User,
@@ -149,33 +188,14 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
         },
       ],
     });
-    if (!post) return res.status(404).json({ error: "Post no encontrado" });
 
-    if (Number(post.get("UserId")) !== Number(userId)) {
-      return res.status(403).json({ error: "No autorizado" });
-    }
-
-    const existingLike = await PostLike.findOne({
-      where: { UserId: userId, PostId: postId },
-    });
-
-    let liked = false;
-
-    if (existingLike) {
-      await existingLike.destroy();
-      liked = false;
-    } else {
-      await PostLike.create({ UserId: userId, PostId: postId });
-      liked = true;
-    }
+    const likesCount = (post?.get("likers") as any[]) || [];
 
     return res.json({
       succes: true,
       liked,
-      likes: post.get("likers")?.length || 0,
-      message: liked
-        ? "Te gusto el mensaje"
-        : "Te ha dejado de gustar el mensaje",
+      likes: Array.isArray(likesCount) ? likesCount.length : 0,
+      message: liked ? "Te gusto el post" : "Te ha dejado de gustar el post",
       post,
     });
   } catch (err) {

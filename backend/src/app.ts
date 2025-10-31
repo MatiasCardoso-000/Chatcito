@@ -23,9 +23,9 @@ User.hasMany(Post, { onDelete: "CASCADE" });
 Post.belongsTo(User);
 
 //Usuario puede dar like a varios posts
-User.belongsToMany(Post, { through: PostLike, as: 'likedPosts' });
+User.belongsToMany(Post, { through: PostLike, as: 'likedPosts',foreignKey: 'likerId' });
 //Un post puede tener varios likes
-Post.belongsToMany(User, { through: PostLike, as: 'likers' });
+Post.belongsToMany(User, { through: PostLike, as: 'likers',foreignKey: 'postLikedId'  });
 
 //Un usuario puede tener varios comentarios
 User.hasMany(Comment, { onDelete: 'CASCADE' });
