@@ -345,10 +345,57 @@ const getFollowers = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
+const getFollowing = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { userId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+
+    const user = await User.findByPk(userId, {
+      include: [
+        {
+          model: User,
+          as: "following",
+           attributes: ["id", "username", "bio", "profileImage"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
+    const following = (user.get("following") as any[]) || [];
+    const count = Array.isArray(following) ? following.length : 0;
+    return res.json({
+      success: true,
+      data:following,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    });
+  } catch (err) {
+    console.error("Error obteniendo siguiendo:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener siguiendo",
+    });
+  }
+};
+
 export const userController = {
   createUser,
   login,
   getUserProfile,
   toggleFollow,
   getFollowers,
+  getFollowing,
 };

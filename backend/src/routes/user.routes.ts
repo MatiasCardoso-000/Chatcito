@@ -27,6 +27,7 @@ router.post(
 
 // Followers y Following
 router.get('/users/:userId/followers', validateToken, userController.getFollowers);
+router.get('/users/:userId/following', validateToken, userController.getFollowing);
 
 //Perfil de usuario
 router.get("/users/:userId", validateToken, userController.getUserProfile);

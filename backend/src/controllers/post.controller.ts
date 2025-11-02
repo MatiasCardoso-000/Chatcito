@@ -57,18 +57,74 @@ const getPosts = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ success: true, data: postsWithLikes });
 };
 
-const getUserPost = async (
-  req: AuthRequest,
-  res: Response
-): Promise<Response> => {
+const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const id = req.user!.id;
+    const { userId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
 
-    const posts = await Post.findOne({ where: { UserId: id } });
-    return res.json(posts);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    return res.status(500).json({ message });
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
+    const { count, rows: posts } = await Post.findAndCountAll({
+      where: { UserId: userId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "username", "profileImage"],
+        },
+        {
+          model: User,
+          as: "likers",
+          attributes: ["id"],
+          through: { attributes: [] },
+        },
+        {
+          model: Comment,
+          attributes: ["id"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset,
+    });
+
+    const postsWithCounts = posts.map((post) => {
+      const likes = (post.get("likers") as any[]) || [];
+      const likesCount = Array.isArray(likes) ? likes.length : 0;
+
+      const comments = (post.get("comments") as any[]) || [];
+      const commentsCount = Array.isArray(comments) ? comments.length : 0;
+
+      return {
+        ...post.toJSON(),
+        likesCount,
+        commentsCount,
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: postsWithCounts,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
+    });
+  } catch (err) {
+    console.error("Error obteniendo posts del usuario:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener posts",
+    });
   }
 };
 
@@ -221,7 +277,7 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
 export const postController = {
   createPost,
   getPosts,
-  getUserPost,
+  getUserPosts,
   getCommentsCount,
   toggleLike,
   updatePost,
