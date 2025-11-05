@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
+import { User } from "../models/user";
 import { Post } from "../models/posts";
 import { Comment } from "../models/comments";
 import { PostLike } from "../models/likes";
-import { User } from "../models/user";
+import { Follow } from "../models/follow";
+import { Op } from "sequelize";
+import { sequelize } from "../config/database";
 
 interface AuthRequest extends Request {
   user?: { id: string };
@@ -128,6 +131,118 @@ const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
+const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const userId = req.user?.id;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+    }
+
+    // Obtener IDs de usuarios que sigo + yo mismo
+    const following = await Follow.findAll({
+      where: { followerId: userId },
+      attributes: ['followingId'],
+      raw: true
+    });
+
+console.log(following);
+
+    const followingIds = following.map(f => {
+   return f.followingId
+    });
+    const userIdsToShow = [...followingIds, userId];
+
+    // Posts con subqueries para counts (MÁS EFICIENTE)
+    const { count, rows: posts } = await Post.findAndCountAll({
+      where: {
+        UserId: { [Op.in]: userIdsToShow }
+      },
+      attributes: [
+        'id',
+        'content',
+        'UserId',
+        'createdAt',
+        'updatedAt',
+        // Subquery para contar likes
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM post_likes
+            WHERE post_likes."postLikedId" = "Post"."id"
+          )`),
+          'likesCount'
+        ],
+        // Subquery para contar comentarios
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM comments
+            WHERE comments."PostId" = "Post"."id"
+          )`),
+          'commentsCount'
+        ],
+        // Subquery para verificar si el usuario dio like
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*) > 0
+            FROM post_likes
+            WHERE post_likes."postLikedId" = "Post"."id"
+            AND post_likes."likerId" = ${userId}
+          )`),
+          'isLikedByUser'
+        ]
+      ],
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'username', 'profileImage']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      subQuery: false
+    });
+
+    const postsWithData = posts.map(post => {
+      const postJSON = post.toJSON();
+      return {
+        ...postJSON,
+        likesCount: parseInt(postJSON.likesCount) || 0,
+        commentsCount: parseInt(postJSON.commentsCount) || 0,
+        isLikedByUser: Boolean(postJSON.isLikedByUser),
+        isOwnPost: postJSON.UserId === userId
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: postsWithData,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+        hasMore: page < Math.ceil(count / limit)
+      }
+    });
+
+  } catch (err) {
+    console.error('Error obteniendo feed:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al obtener el feed'
+    });
+  }
+};
+
 const updatePost = async (
   req: AuthRequest,
   res: Response
@@ -215,10 +330,6 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    if (postToLike.get("UserId") !== likerId) {
-      return res.status(403).json({ error: "No autorizado" });
-    }
-
     const existingLike = await PostLike.findOne({
       where: { likerId, postLikedId: postId },
     });
@@ -277,6 +388,7 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
 export const postController = {
   createPost,
   getPosts,
+  getFeed,
   getUserPosts,
   getCommentsCount,
   toggleLike,
