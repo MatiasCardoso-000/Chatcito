@@ -7,12 +7,12 @@ export const PostLike = sequelize.define(
     likerId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'likerId' 
+      field: 'liker_id' 
     },
     postLikedId: {
       type: DataTypes.INTEGER, 
       allowNull: false,
-      field: 'postLikedId'
+      field: 'postLiked_id'
     }
   },
   {

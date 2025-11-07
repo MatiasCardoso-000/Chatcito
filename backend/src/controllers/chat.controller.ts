@@ -45,7 +45,7 @@ const getOrCreateConversation = async (
     }
 
     // Buscar si ya existe una conversación entre estos 2 usuarios
-    const existingConversation = await Conversation.findOne({
+    const conversations = await Conversation.findAll({
       include: [
         {
           model: User,
@@ -57,11 +57,16 @@ const getOrCreateConversation = async (
           },
         },
       ],
-      having: sequelize.where(
-        sequelize.fn("COUNT", sequelize.col("participants.id")),
-        2
-      ),
-      group: ["Conversation.id"],
+    });
+
+    const existingConversation = conversations.find((convo) => {
+      const participants = (convo.get("participants") as any[]) || [];
+      const participantIds = participants.map((p) => p.id);
+      return (
+        participantIds.includes(currentUserId) &&
+        participantIds.includes(otherUserId) &&
+        participantIds.length === 2
+      );
     });
 
     if (existingConversation) {
@@ -255,7 +260,7 @@ const getMessages = async (
     // Verificar que el usuario es participante
     const participant = await ConversationParticipant.findOne({
       where: {
-        ConversationId: conversationId,
+        conversationId: conversationId,
         UserId: currentUserId,
       },
     });
@@ -271,7 +276,7 @@ const getMessages = async (
 
     const { count, rows: messages } = await Message.findAndCountAll({
       where: {
-        ConversationId: conversationId,
+        conversationId: conversationId,
       },
       include: [
         {
@@ -280,7 +285,7 @@ const getMessages = async (
           attributes: ["id", "username", "profileImage"],
         },
       ],
-      order: [["createdAt", "DESC"]],
+      order: [["createdAt", "ASC"]],
       limit,
       offset,
     });
@@ -370,7 +375,7 @@ const getConversations = async (
         // Contar mensajes no leídos
         const participant = await ConversationParticipant.findOne({
           where: {
-            ConversationId: conversationId,
+            conversationid: conversationId,
             UserId: currentUserId,
           },
         });
@@ -420,9 +425,68 @@ const getConversations = async (
   }
 };
 
+const markAsRead = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const currentUserId = req.user?.id;
+    const { conversationId } = req.params;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Usuario no autenticado",
+      });
+    }
+
+    // Verificar que es participante
+    const participant = await ConversationParticipant.findOne({
+      where: {
+        ConversationId: conversationId,
+        UserId: currentUserId,
+      },
+    });
+
+    if (!participant) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes acceso a esta conversación",
+      });
+    }
+
+    // Actualizar lastRead
+    await participant.update({ lastRead: new Date() });
+
+    // Marcar como leídos todos los mensajes que no son míos
+    await Message.update(
+      { isRead: true },
+      {
+        where: {
+          ConversationId: conversationId,
+          senderId: { [Op.ne]: currentUserId },
+          isRead: false,
+        },
+      }
+    );
+
+    return res.json({
+      success: true,
+      message: "Mensajes marcados como leídos",
+    });
+  } catch (err) {
+    console.error("Error marcando como leído:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error al marcar mensajes como leídos",
+    });
+  }
+};
+
 export const chatController = {
   getOrCreateConversation,
   sendMessage,
   getMessages,
-  getConversations
+  getConversations,
+  markAsRead,
 };

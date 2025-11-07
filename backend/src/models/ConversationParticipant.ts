@@ -14,9 +14,15 @@ export const ConversationParticipant = sequelize.define(
       allowNull: true,
       comment: "Última vez que el usuario leyó mensajes",
     },
+    conversation_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "conversation_id",
+    },
   },
   {
     tableName: "conversation_participants",
     timestamps: true,
+    underscored:false
   }
 );

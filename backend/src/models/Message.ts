@@ -22,9 +22,15 @@ export const Message = sequelize.define(
       defaultValue: false,
       comment: "Si el mensaje fue leído por el receptor",
     },
+    senderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "sender_id",
+    },
   },
   {
     tableName: "messages",
     timestamps: true, // createdAt = cuándo se envió
+    underscored: false
   }
 );

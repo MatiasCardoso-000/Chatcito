@@ -7,7 +7,11 @@ export const sequelize = new Sequelize(
   {
     host: "localhost",
     dialect: "postgres",
-    logging: console.log
-  },
-
+    logging: console.log,
+    define: {
+      freezeTableName: true, // Evita pluralizar (usa el nombre exacto del modelo)
+      underscored: true, // Convierte camelCase a snake_case en columnas (user_id en vez de UserId)
+      timestamps: true, // Agrega created_at y updated_at automáticamente
+    },
+  }
 );

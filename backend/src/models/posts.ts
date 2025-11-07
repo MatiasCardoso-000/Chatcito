@@ -14,10 +14,10 @@ export const Post = sequelize.define(
     timestamps: true,
     indexes: [
       {
-        fields: ["UserId"],
+        fields: ["user_id"],
       },
       {
-        fields: ["createdAt"],
+        fields: ["created_at"],
       },
     ],
   }

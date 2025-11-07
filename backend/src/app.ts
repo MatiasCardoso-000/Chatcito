@@ -3,6 +3,7 @@ import { sequelize } from "./config/database";
 import { router as userRoutes } from "./routes/user.routes";
 import { router as postRoutes } from "./routes/post.routes";
 import { router as commentsRoutes } from "./routes/comments.routes";
+import { router as chatRoutes } from "./routes/chat.routes";
 import { User } from "./models/user";
 import { Post } from "./models/posts";
 import { Comment } from "./models/comments";
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use("/api/auth", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentsRoutes);
+app.use("/api/conversations", chatRoutes);
 
 // Relaciones
 
@@ -44,14 +46,14 @@ Comment.belongsTo(Post);
 User.belongsToMany(User, { 
   through: Follow, 
   as: 'following', 
-  foreignKey: 'followerId'
+  foreignKey: 'follower_id'
 });
 
 //Un usuario puede tener varios seguidores
 User.belongsToMany(User, { 
   through: Follow, 
   as: 'followers', 
-  foreignKey: 'followingId'
+  foreignKey: 'following_id'
 });
 
 
@@ -59,42 +61,42 @@ User.belongsToMany(User, {
 User.belongsToMany(Conversation, {
   through: ConversationParticipant,
   as:"conversations",
-  foreignKey: "UserId"
+  foreignKey: "user_id"
 })
 
 //Conversación puede tener varios participantes
 Conversation.belongsToMany(User, {
   through:ConversationParticipant,
   as:"participants",
-  foreignKey:"ConversationId"
+  foreignKey: "conversation_id"
 })
 
 //Conversación contiene muchos mensajes
 Conversation.hasMany(Message,{
   onDelete:"CASCADE",
-  foreignKey:"ConversationId"
+  foreignKey: "conversation_id"
 })
 
 //Mensaje pertenece a una conversación
 Message.belongsTo(Conversation, {
-  foreignKey:"ConversationId"
+  foreignKey: "conversation_id"
 })
 
 //Usuario puede enviar muchos mensajes
 User.hasMany(Message, { 
   onDelete:"CASCADE",
-  foreignKey:"senderId",
+  foreignKey:"sender_id",
   as: "sentMessages"
 })
 
 //Mensaje pertenece a un usuario remitente
 Message.belongsTo(User, {
-  foreignKey:"senderId",
+  foreignKey:"sender_id",
   as:"sender"
 })
 
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync({ force: true }).then(() => {
   app.listen(process.env.PORT, () =>
     console.log("Servidor corriendo en puerto ", process.env.PORT)
   );
