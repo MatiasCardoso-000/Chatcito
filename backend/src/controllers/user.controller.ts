@@ -76,9 +76,9 @@ const createUser = async (req: Request, res: Response): Promise<Response> => {
 };
 
 const login = async (req: Request, res: Response): Promise<Response> => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   try {
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
     const hashedPassword = user.get("password") as string;
@@ -96,6 +96,7 @@ const login = async (req: Request, res: Response): Promise<Response> => {
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    console.log(email, password);
 
     return res.json({
       succes: true,
@@ -357,7 +358,7 @@ const getFollowing = async (req: Request, res: Response): Promise<Response> => {
         {
           model: User,
           as: "following",
-           attributes: ["id", "username", "bio", "profileImage"],
+          attributes: ["id", "username", "bio", "profileImage"],
           through: { attributes: [] },
         },
       ],
@@ -374,7 +375,7 @@ const getFollowing = async (req: Request, res: Response): Promise<Response> => {
     const count = Array.isArray(following) ? following.length : 0;
     return res.json({
       success: true,
-      data:following,
+      data: following,
       pagination: {
         total: count,
         page,

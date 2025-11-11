@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Chat WebSocket</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 800px;
+        height: 600px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ef4444;
+        animation: pulse 2s infinite;
+      }
+
+      .status-dot.connected {
+        background: #10b981;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .login-section {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .login-section input {
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: border 0.3s;
+      }
+
+      .login-section input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .login-section button {
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .login-section button:hover {
+        transform: translateY(-2px);
+      }
+
+      .chat-section {
+        display: none;
+        flex: 1;
+        flex-direction: column;
+      }
+
+      .chat-info {
+        padding: 15px 20px;
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .typing-indicator {
+        color: #667eea;
+        font-size: 14px;
+        font-style: italic;
+        min-height: 20px;
+      }
+
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .message {
+        display: flex;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.mine {
+        flex-direction: row-reverse;
+      }
+
+      .message-content {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        background: #f3f4f6;
+        word-wrap: break-word;
+      }
+
+      .message.mine .message-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .message-sender {
+        font-size: 12px;
+        color: #6b7280;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+
+      .message.mine .message-sender {
+        text-align: right;
+        color: white;
+      }
+
+      .message-text {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      .message-time {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-top: 4px;
+      }
+
+      .message.mine .message-time {
+        color: rgba(255, 255, 255, 0.7);
+        text-align: right;
+      }
+
+      .input-section {
+        padding: 20px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 10px;
+      }
+
+      .input-section input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 25px;
+        font-size: 15px;
+        transition: border 0.3s;
+      }
+
+      .input-section input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .input-section button {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .input-section button:hover {
+        transform: scale(1.05);
+      }
+
+      .input-section button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .error {
+        color: #ef4444;
+        padding: 10px;
+        background: #fee;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+
+      .success {
+        color: #10b981;
+        padding: 10px;
+        background: #d1fae5;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>💬 Test Chat WebSocket</h1>
+        <div class="status">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">Desconectado</span>
+        </div>
+      </div>
+
+      <!-- Sección de Login -->
+      <div class="login-section" id="loginSection">
+        <h2>Iniciar Sesión</h2>
+        <input
+          type="text"
+          id="emailInput"
+          placeholder="Email"
+          value="usuario1@email.com"
+        />
+        <input
+          type="password"
+          id="passwordInput"
+          placeholder="Password"
+          value="password123"
+        />
+        <input
+          type="number"
+          id="conversationIdInput"
+          placeholder="ID de Conversación"
+          value="1"
+        />
+        <button onclick="login()">Conectar</button>
+        <div id="loginError"></div>
+      </div>
+
+      <!-- Sección de Chat -->
+      <div class="chat-section" id="chatSection">
+        <div class="chat-info">
+          <div>
+            <strong>Conversación #<span id="currentConvId"></span></strong>
+            <div class="typing-indicator" id="typingIndicator"></div>
+          </div>
+          <button
+            onclick="disconnect()"
+            style="
+              padding: 8px 16px;
+              background: #ef4444;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+            "
+          >
+            Desconectar
+          </button>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-section">
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Escribe un mensaje..."
+            onkeypress="handleKeyPress(event)"
+            oninput="handleTyping()"
+          />
+          <button onclick="sendMessage()" id="sendBtn">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let socket = null;
+      let token = null;
+      let currentUserId = null;
+      let currentConversationId = null;
+      let typingTimeout = null;
+      let isTyping = false;
+
+      const API_URL = "http://localhost:4555/api";
+      const SOCKET_URL = "http://localhost:4555";
+
+      // Login
+      async function login() {
+        const email = document.getElementById("emailInput").value;
+        const password = document.getElementById("passwordInput").value;
+        const conversationId = document.getElementById(
+          "conversationIdInput"
+        ).value;
+
+        try {
+          // Login via API REST
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+
+          console.log("📥 Respuesta login:", data);
+
+          if (!response.ok) {
+            throw new Error(data.message || "Error al iniciar sesión");
+          }
+
+          token = data.accessToken;
+          console.log(token);
+
+          currentUserId = data.user.id;
+          currentConversationId = parseInt(conversationId);
+
+          console.log("✅ Login exitoso");
+          console.log("Token:", token);
+          console.log("User ID:", currentUserId);
+
+          document.getElementById(
+            "loginError"
+          ).innerHTML = `<div class="success">✅ Login exitoso como ${data.user.username}</div>`;
+
+          // Conectar WebSocket
+          // Esperar 1 segundo antes de conectar
+          setTimeout(() => {
+            connectSocket();
+          }, 1000);
+        } catch (err) {
+          document.getElementById(
+            "loginError"
+          ).innerHTML = `<div class="error">❌ ${err.message}</div>`;
+        }
+      }
+
+      // Conectar Socket
+      function connectSocket() {
+        console.log("🔌 Iniciando conexión WebSocket...");
+        console.log("Token a enviar:", token);
+        console.log("URL:", SOCKET_URL);
+
+        socket = io(SOCKET_URL, {
+          query: { token: token },
+          transports: ["websocket", "polling"],
+        });
+
+        socket.on("connect", () => {
+          console.log("✅ CONECTADO al WebSocket");
+          console.log("Socket ID:", socket.id);
+          updateStatus(true);
+
+          // Unirse a la conversación
+          socket.emit("join_conversation", currentConversationId);
+          console.log("👥 Unido a conversación", currentConversationId);
+          // Mostrar sección de chat
+          document.getElementById("loginSection").style.display = "none";
+          document.getElementById("chatSection").style.display = "flex";
+          document.getElementById("currentConvId").textContent =
+            currentConversationId;
+
+          // Cargar mensajes existentes
+          loadMessages();
+        });
+
+        socket.on("connect_error", (err) => {
+          console.error("❌ ERROR DE CONEXIÓN:", err.message);
+          console.error("Detalles:", err);
+          document.getElementById(
+            "loginError"
+          ).innerHTML = `<div class="error">❌ Error de conexión: ${err.message}</div>`;
+          updateStatus(false);
+        });
+
+        socket.on("disconnect", () => {
+          console.log("❌ Desconectado:", reason);
+          updateStatus(false);
+        });
+
+        // Recibir nuevo mensaje
+        socket.on("new_message", (message) => {
+          console.log("📩 Nuevo mensaje:", message);
+          addMessage(message);
+        });
+
+        // Usuario escribiendo
+        socket.on("user_typing", (data) => {
+          if (data.conversationId === currentConversationId) {
+            document.getElementById("typingIndicator").textContent =
+              "✍️ El otro usuario está escribiendo...";
+          }
+        });
+
+        // Usuario dejó de escribir
+        socket.on("user_stop_typing", (data) => {
+          if (data.conversationId === currentConversationId) {
+            document.getElementById("typingIndicator").textContent = "";
+          }
+        });
+
+        // Mensajes leídos
+        socket.on("messages_read", (data) => {
+          console.log("✅ Mensajes leídos por usuario", data.readBy);
+        });
+
+        // Usuario online
+        socket.on("user_online", (data) => {
+          console.log("🟢 Usuario online:", data.userId);
+        });
+
+        // Usuario offline
+        socket.on("user_offline", (data) => {
+          console.log("🔴 Usuario offline:", data.userId);
+        });
+
+        // Error
+        socket.on("error", (data) => {
+          console.error("❌ Error:", data.message);
+          alert("Error: " + data.message);
+        });
+      }
+
+      // Cargar mensajes existentes via API
+      async function loadMessages() {
+        try {
+          const response = await fetch(
+            `${API_URL}/conversations/${currentConversationId}/messages?limit=50`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            document.getElementById("messages").innerHTML = "";
+            data.data.forEach((message) => addMessage(message, false));
+            scrollToBottom();
+          }
+        } catch (err) {
+          console.error("Error cargando mensajes:", err);
+        }
+      }
+
+      // Enviar mensaje via WebSocket
+      function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const content = input.value.trim();
+
+        if (!content) return;
+
+        // Emitir evento de stop typing
+        if (isTyping) {
+          socket.emit("stop_typing", { conversationId: currentConversationId });
+          isTyping = false;
+        }
+
+        // Enviar mensaje
+        socket.emit("send_message", {
+          conversationId: currentConversationId,
+          content,
+        });
+
+        input.value = "";
+        document.getElementById("sendBtn").disabled = false;
+      }
+
+      // Manejar Enter
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      // Manejar typing
+      function handleTyping() {
+        if (!isTyping) {
+          socket.emit("typing", { conversationId: currentConversationId });
+          isTyping = true;
+        }
+
+        clearTimeout(typingTimeout);
+
+        typingTimeout = setTimeout(() => {
+          socket.emit("stop_typing", { conversationId: currentConversationId });
+          isTyping = false;
+        }, 2000);
+      }
+
+      // Agregar mensaje al DOM
+      function addMessage(message, animate = true) {
+        const messagesDiv = document.getElementById("messages");
+        const isMine = message.senderId === currentUserId;
+
+        const messageEl = document.createElement("div");
+        messageEl.className = `message ${isMine ? "mine" : ""}`;
+
+        const time = new Date(message.createdAt).toLocaleTimeString("es", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        messageEl.innerHTML = `
+        <div class="message-content">
+          ${
+            !isMine
+              ? `<div class="message-sender">${
+                  message.sender?.username || "Usuario"
+                }</div>`
+              : ""
+          }
+          <div class="message-text">${message.content}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+
+        messagesDiv.appendChild(messageEl);
+        scrollToBottom();
+      }
+
+      // Scroll al final
+      function scrollToBottom() {
+        const messagesDiv = document.getElementById("messages");
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      // Actualizar status
+      function updateStatus(connected) {
+        const dot = document.getElementById("statusDot");
+        const text = document.getElementById("statusText");
+
+        if (connected) {
+          dot.classList.add("connected");
+          text.textContent = "Conectado";
+        } else {
+          dot.classList.remove("connected");
+          text.textContent = "Desconectado";
+        }
+      }
+
+      // Desconectar
+      function disconnect() {
+        if (socket) {
+          socket.emit("leave_conversation", currentConversationId);
+          socket.disconnect();
+        }
+
+        document.getElementById("loginSection").style.display = "flex";
+        document.getElementById("chatSection").style.display = "none";
+        document.getElementById("messages").innerHTML = "";
+        updateStatus(false);
+      }
+    </script>
+  </body>
+</html>

@@ -225,6 +225,14 @@ const sendMessage = async (
     // Actualizar updatedAt de la conversación
     await conversation.update({ updateAt: new Date() });
 
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`conversation_${conversationId}`).emit(
+        "new_message",
+        messageWithSender
+      );
+    }
+
     return res.status(201).json({
       success: true,
       data: messageWithSender,
