@@ -22,7 +22,7 @@ export const Message = sequelize.define(
       defaultValue: false,
       comment: "Si el mensaje fue leído por el receptor",
     },
-    senderId: {
+    sender_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "sender_id",

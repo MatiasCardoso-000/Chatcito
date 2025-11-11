@@ -96,7 +96,7 @@ Message.belongsTo(User, {
 })
 
 
-sequelize.sync({ force: true }).then(() => {
+sequelize.sync({ alter: true }).then(() => {
   app.listen(process.env.PORT, () =>
     console.log("Servidor corriendo en puerto ", process.env.PORT)
   );

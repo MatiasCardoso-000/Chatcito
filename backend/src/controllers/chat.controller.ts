@@ -96,16 +96,16 @@ const getOrCreateConversation = async (
 
       await ConversationParticipant.create(
         {
-          ConversationId: newConversation.get("id"),
-          UserId: currentUserId,
+          conversation_id: newConversation.get("id"),
+          user_id: currentUserId,
         },
         { transaction }
       );
 
       await ConversationParticipant.create(
         {
-          ConversationId: newConversation.get("id"),
-          UserId: otherUserId,
+          conversation_id: newConversation.get("id"),
+          user_id: otherUserId,
         },
         { transaction }
       );
@@ -189,8 +189,8 @@ const sendMessage = async (
     // Verificar que el usuario es participante de la conversación
     const participant = await ConversationParticipant.findOne({
       where: {
-        ConversationId: conversationId,
-        UserId: currentUserId,
+        conversation_id: conversationId,
+        user_id: currentUserId,
       },
     });
 
@@ -203,8 +203,8 @@ const sendMessage = async (
 
     // Crear el mensaje
     const message = await Message.create({
-      ConversationId: conversationId,
-      senderId: currentUserId,
+      conversation_id: conversationId,
+      sender_id: currentUserId,
       content: content.trim(),
       isRead: false,
     });
@@ -260,8 +260,8 @@ const getMessages = async (
     // Verificar que el usuario es participante
     const participant = await ConversationParticipant.findOne({
       where: {
-        conversationId: conversationId,
-        UserId: currentUserId,
+        conversation_id: conversationId,
+        user_id: currentUserId,
       },
     });
 
@@ -276,7 +276,7 @@ const getMessages = async (
 
     const { count, rows: messages } = await Message.findAndCountAll({
       where: {
-        conversationId: conversationId,
+        conversation_id: conversationId,
       },
       include: [
         {
@@ -342,9 +342,9 @@ const getConversations = async (
       where: {
         id: {
           [Op.in]: sequelize.literal(`(
-        SELECT ConversationId 
+        SELECT conversation_id 
         FROM conversation_participants
-        WHERE UserId = ${currentUserId}
+        WHERE user_id = ${currentUserId}
         )`),
         },
       },
@@ -360,7 +360,7 @@ const getConversations = async (
         //Ultimo mensaje
         const lastMessage = await Message.findOne({
           where: {
-            ConversationId: conversationId,
+            conversation_id: conversationId,
           },
           order: [["createdAt", "DESC"]],
           include: [
@@ -375,16 +375,16 @@ const getConversations = async (
         // Contar mensajes no leídos
         const participant = await ConversationParticipant.findOne({
           where: {
-            conversationid: conversationId,
-            UserId: currentUserId,
+            conversation_id: conversationId,
+            user_id: currentUserId,
           },
         });
 
         const unreadCount = await Message.count({
           where: {
-            ConversationId: conversationId,
-            senderId: { [Op.ne]: currentUserId }, // No mis mensajes
-            cratedAt: {
+            conversation_id: conversationId,
+            sender_id: { [Op.ne]: currentUserId }, // No mis mensajes
+            createdAt: {
               [Op.gt]: participant?.get("lastRead") || new Date(0),
             },
           },
@@ -443,8 +443,8 @@ const markAsRead = async (
     // Verificar que es participante
     const participant = await ConversationParticipant.findOne({
       where: {
-        ConversationId: conversationId,
-        UserId: currentUserId,
+        conversation_id: conversationId,
+        user_id: currentUserId,
       },
     });
 
@@ -463,8 +463,8 @@ const markAsRead = async (
       { isRead: true },
       {
         where: {
-          ConversationId: conversationId,
-          senderId: { [Op.ne]: currentUserId },
+          conversation_id: conversationId,
+          sender_id: { [Op.ne]: currentUserId },
           isRead: false,
         },
       }
