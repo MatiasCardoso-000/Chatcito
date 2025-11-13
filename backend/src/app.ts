@@ -29,10 +29,15 @@ const io = new Server(server, {
   },
 });
 
-console.log('🔌 Socket.io configurado');
+console.log("🔌 Socket.io configurado");
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use("/api/auth", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentsRoutes);
@@ -132,7 +137,9 @@ sequelize
     console.log("✔Base de datos sincronizada");
 
     server.listen(process.env.PORT, () => {
-       console.log(`🚀 Servidor corriendo en http://localhost:${process.env.PORT}`);
+      console.log(
+        `🚀 Servidor corriendo en http://localhost:${process.env.PORT}`
+      );
       console.log(`💬 WebSocket server en ws://localhost:${process.env.PORT}`);
     });
   })

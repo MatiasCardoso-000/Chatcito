@@ -12,7 +12,8 @@ const createComment = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { content, postId } = req.body;
+    const { content} = req.body;
+    const {postId} = req.params
     const UserId = req.user?.id;
 
     if (!content || content.trim().length === 0) {

@@ -20,6 +20,9 @@ export interface Post {
   isOwnPost: boolean;
   createdAt: string;
   updatedAt: string;
+  author:string,
+  timestamp: string
+  avatar:string
 }
 
 export interface Comment {

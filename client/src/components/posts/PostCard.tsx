@@ -1,42 +1,233 @@
+// src/components/posts/PostCard.tsx
 
-interface Post {
-  author: string;
-  avatar?: string;
-  content:string;
-  timestamp: string;
-}
+import { useState } from 'react';
+import { Heart, MessageCircle, Trash2, Edit2, MoreVertical } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import type { Post } from '../../types';
+import { useAuthStore } from '../../store/authStore';
+import CommentSection from './CommentSection';
+import { postsAPI } from '../../services/posts';
 
 interface PostCardProps {
   post: Post;
+  onUpdate?: (updatedPost: Post) => void;
+  onDelete?: (postId: number) => void;
 }
 
-const PostCard = ({ post }:PostCardProps) => {
-  const { author, avatar, content, timestamp } = post;
+const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
+  const { user } = useAuthStore();
+  const [isLiked, setIsLiked] = useState(post.isLikedByUser);
+  const [likesCount, setLikesCount] = useState(post.likesCount);
+  const [showComments, setShowComments] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Toggle Like
+  const handleLike = async () => {
+    try {
+      const previousState = { isLiked, likesCount };
+      
+      // Optimistic update
+      setIsLiked(!isLiked);
+      setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+
+      const response = await postsAPI.toggleLike(post.id);
+      
+      // Actualizar con respuesta del servidor
+      if (response.data.success) {
+        setIsLiked(response.data.data.liked);
+      }
+    } catch (error) {
+      // Revertir en caso de error
+      setIsLiked(isLiked);
+      setLikesCount(likesCount);
+      console.error('Error al dar like:', error);
+    }
+  };
+
+  // Editar post
+  const handleEdit = async () => {
+    if (!editContent.trim() || editContent === post.content) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await postsAPI.update(post.id, editContent);
+      if (response.data.success && onUpdate) {
+        onUpdate(response.data.data);
+        setIsEditing(false);
+        setShowMenu(false);
+      }
+    } catch (error) {
+      console.error('Error al editar post:', error);
+      alert('Error al editar el post');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Eliminar post
+  const handleDelete = async () => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este post?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await postsAPI.delete(post.id);
+      if (onDelete) {
+        onDelete(post.id);
+      }
+      setShowMenu(false);
+    } catch (error) {
+      console.error('Error al eliminar post:', error);
+      alert('Error al eliminar el post');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Formatear fecha
+  const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
+    addSuffix: true,
+    locale: es,
+  });
 
   return (
-    <div className="bg-gray-900 rounded-lg shadow-lg p-6 mb-6">
-      <div className="flex items-center mb-4">
-        {avatar && (
-          <img
-            src={avatar}
-            alt={`${author}'s avatar`}
-            className="w-12 h-12 rounded-full mr-4 object-cover"
-          />
-        )}
-        <div>
-          <p className="font-bold text-white">{author}</p>
-          <p className="text-sm text-gray-400">{timestamp}</p>
+    <div className="card hover:shadow-md transition-shadow">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
+            {post.User.username.charAt(0).toUpperCase()}
+          </div>
+
+          {/* User info */}
+          <div>
+            <h3 className="font-semibold text-gray-900">
+              {post.User.username}
+            </h3>
+            <p className="text-sm text-gray-500">{timeAgo}</p>
+          </div>
         </div>
+
+        {/* Menu (solo si es el autor) */}
+        {post.isOwnPost && (
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <MoreVertical className="w-5 h-5 text-gray-500" />
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Editar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      <p className="text-gray-300 mb-4">{content}</p>
-      <div className="flex justify-end space-x-4 text-gray-400">
-        <button className="hover:text-white focus:outline-none">
-          Like
+
+      {/* Content */}
+      <div className="mb-4">
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="input min-h-[100px] resize-none"
+              placeholder="¿Qué estás pensando?"
+              maxLength={500}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditContent(post.content);
+                }}
+                className="btn btn-secondary"
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleEdit}
+                className="btn btn-primary"
+                disabled={isLoading || !editContent.trim()}
+              >
+                {isLoading ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+            {post.content}
+          </p>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
+        {/* Like */}
+        <button
+          onClick={handleLike}
+          className={`flex items-center gap-2 transition-colors ${
+            isLiked
+              ? 'text-red-500'
+              : 'text-gray-500 hover:text-red-500'
+          }`}
+        >
+          <Heart
+            className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
+          />
+          <span className="text-sm font-medium">{likesCount}</span>
         </button>
-        <button className="hover:text-white focus:outline-none">
-          Comment
+
+        {/* Comments */}
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition-colors"
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">{post.commentsCount}</span>
         </button>
       </div>
+
+      {/* Comment Section */}
+      {showComments && (
+        <CommentSection postId={post.id} onCommentAdded={() => {
+          // Actualizar contador de comentarios
+          if (onUpdate) {
+            onUpdate({ ...post, commentsCount: post.commentsCount + 1 });
+          }
+        }} />
+      )}
     </div>
   );
 };

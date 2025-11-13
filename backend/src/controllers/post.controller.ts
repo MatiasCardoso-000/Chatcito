@@ -20,7 +20,7 @@ const createPost = async (
     const { content } = req.body;
     const post = await Post.create({
       content,
-      UserId: id, // viene del middleware de autenticación
+      user_id: id, // viene del middleware de autenticación
     });
     return res.json(post);
   } catch (err) {
@@ -76,7 +76,7 @@ const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
     }
 
     const { count, rows: posts } = await Post.findAndCountAll({
-      where: { UserId: userId },
+      where: { user_id: userId },
       include: [
         {
           model: User,
@@ -147,15 +147,14 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
 
     // Obtener IDs de usuarios que sigo + yo mismo
     const following = await Follow.findAll({
-      where: { followerId: userId },
-      attributes: ['followingId'],
+      where: { follower_id: userId },
+      attributes: ['following_id'],
       raw: true
     });
 
-console.log(following);
 
     const followingIds = following.map(f => {
-   return f.followingId
+   return f.get("following_id")
     });
     const userIdsToShow = [...followingIds, userId];
 
@@ -175,7 +174,7 @@ console.log(following);
           sequelize.literal(`(
             SELECT COUNT(*)
             FROM post_likes
-            WHERE post_likes."postLikedId" = "Post"."id"
+            WHERE post_likes."postLiked_id" = "Post"."id"
           )`),
           'likesCount'
         ],
@@ -183,8 +182,8 @@ console.log(following);
         [
           sequelize.literal(`(
             SELECT COUNT(*)
-            FROM comments
-            WHERE comments."PostId" = "Post"."id"
+            FROM comment
+            WHERE comment."post_id" = "Post"."id"
           )`),
           'commentsCount'
         ],
@@ -193,8 +192,8 @@ console.log(following);
           sequelize.literal(`(
             SELECT COUNT(*) > 0
             FROM post_likes
-            WHERE post_likes."postLikedId" = "Post"."id"
-            AND post_likes."likerId" = ${userId}
+            WHERE post_likes."postLiked_id" = "Post"."id"
+            AND post_likes."liker_id" = ${userId}
           )`),
           'isLikedByUser'
         ]

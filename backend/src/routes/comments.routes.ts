@@ -4,7 +4,7 @@ import { commentsController } from "../controllers/comments.controller";
 
 export const router = Router();
 
-router.post("/", validateToken, commentsController.createComment);
+router.post("/:postId", validateToken, commentsController.createComment);
 router.get(
   "/post/:postId/comments",
   validateToken,
