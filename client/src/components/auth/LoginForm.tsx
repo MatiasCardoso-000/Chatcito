@@ -1,22 +1,28 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../common/Button";
 import { authAPI } from "../../services/auth";
+import { useAuthStore } from "../../store/authStore";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const { login, isAuthenticated } = useAuthStore();
+
+  const navigate = useNavigate();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const formData = new FormData()
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-    console.log(email,password);
-    
-
+    // TODO: Add login API call here using authAPI
+    login(email, password);
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">

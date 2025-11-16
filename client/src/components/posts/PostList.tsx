@@ -23,11 +23,9 @@ const PostList = ({ type }: PostListProps) => {
     setIsLoading(true);
     try {
       const response = await postsAPI.getPosts(1, 10);
-      console.log(response);
       
       if (response.data.success) {
         setPosts(response.data.data);
-        setHasMore(response.data.pagination.hasMore);
       }
     } catch (error) {
       console.error("Error cargando posts:", error);
@@ -42,7 +40,7 @@ const PostList = ({ type }: PostListProps) => {
       const response =
         type === "feed"
           ? await postsAPI.getFeed(nextPage, 10)
-          : await postsAPI.getAll(nextPage, 10);
+          : await postsAPI.getPosts(nextPage, 10);
 
       if (response.data.success) {
         setPosts([...posts, ...response.data.data]);

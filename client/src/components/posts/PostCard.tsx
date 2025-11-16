@@ -110,7 +110,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
 
           {/* User info */}
           <div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-white-900">
               {post.User.username}
             </h3>
             <p className="text-sm text-gray-500">{timeAgo}</p>
@@ -186,7 +186,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
             </div>
           </div>
         ) : (
-          <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+          <p className="text-white-800 whitespace-pre-wrap leading-relaxed">
             {post.content}
           </p>
         )}
@@ -200,7 +200,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
           className={`flex items-center gap-2 transition-colors ${
             isLiked
               ? 'text-red-500'
-              : 'text-gray-500 hover:text-red-500'
+              : 'text-white hover:text-red-500'
           }`}
         >
           <Heart
@@ -212,7 +212,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
         {/* Comments */}
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition-colors"
+          className="flex items-center gap-2 text-white hover:text-primary-600 transition-colors"
         >
           <MessageCircle className="w-5 h-5" />
           <span className="text-sm font-medium">{post.commentsCount}</span>

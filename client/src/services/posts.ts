@@ -1,5 +1,5 @@
 import type { ApiResponse, PaginatedResponse, Post } from "../types";
-import { api, API_URL } from "./api";
+import { api } from "./api";
 
 export const postsAPI = {
   create: (content: string) => api.post<ApiResponse<Post>>("/", { content }),
@@ -11,10 +11,7 @@ export const postsAPI = {
   },
 
   getPosts: (page = 1, limit = 10) => {
-    return fetch(`${API_URL}/posts`, {
-      method: "GET",
-      credentials: "include",
-    }).then(res =>res.json() as Promise<ApiResponse<PaginatedResponse<Post>>>);
+    return api.get<PaginatedResponse<Post>>(`/posts?page=${page}&limit=${limit}`);
   },
 
   getById: (postId: number) => api.get<ApiResponse<Post>>(`/${postId}`),
@@ -25,5 +22,5 @@ export const postsAPI = {
   delete: (postId: number) => api.delete<ApiResponse<void>>(`/${postId}`),
 
   toggleLike: (postId: number) =>
-    api.post<ApiResponse<{ liked: boolean }>>(`/${postId}/like`),
+    api.post<ApiResponse<{ liked: boolean }>>(`/posts/${postId}/like`),
 };

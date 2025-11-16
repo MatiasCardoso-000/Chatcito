@@ -6,7 +6,7 @@ export const authAPI = {
     api.post<AuthResponse>('/register', data),
   
   login: (data: { email: string; password: string }) =>
-    api.post<AuthResponse>('/login', data),
+    api.post<AuthResponse>('/auth/login', data),
   
   getMe: () =>
     api.get<ApiResponse<User>>('/me'),

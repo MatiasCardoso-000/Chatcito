@@ -1,18 +1,22 @@
 // src/store/authStore.ts
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { User } from '../types';
-import { authAPI } from '../services/auth';
-import { socketService } from '../services/socket';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { User } from "../types";
+import { authAPI } from "../services/auth";
+import { socketService } from "../services/socket";
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
 }
@@ -21,7 +25,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
+      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -29,13 +33,15 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authAPI.login({ email, password });
-          const { token, user } = response.data;
           
-          localStorage.setItem('token', token);
-          set({ user, token, isAuthenticated: true, isLoading: false });
+          const { user, accessToken } = await response.data;
+          console.log(user);
           
+          localStorage.setItem("token", accessToken);
+          set({ user, accessToken, isAuthenticated: true, isLoading: false });
+
           // Conectar WebSocket
-          socketService.connect(token);
+          socketService.connect(accessToken);
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -45,14 +51,18 @@ export const useAuthStore = create<AuthState>()(
       register: async (username, email, password) => {
         set({ isLoading: true });
         try {
-          const response = await authAPI.register({ username, email, password });
-          const { token, user } = response.data;
-          
-          localStorage.setItem('token', token);
-          set({ user, token, isAuthenticated: true, isLoading: false });
-          
+          const response = await authAPI.register({
+            username,
+            email,
+            password,
+          });
+          const {  accessToken, user } = response.data;
+
+          localStorage.setItem("token", accessToken);
+          set({ user,  accessToken, isAuthenticated: true, isLoading: false });
+
           // Conectar WebSocket
-          socketService.connect(token);
+          socketService.connect(accessToken);
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -60,13 +70,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem("token");
         socketService.disconnect();
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, accessToken:null, isAuthenticated: false });
       },
 
       checkAuth: async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
           set({ isAuthenticated: false });
           return;
@@ -74,19 +84,19 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authAPI.getMe();
-          set({ user: response.data.data, token, isAuthenticated: true });
-          
+          set({ user: response.data.data, accessToken, isAuthenticated: true });
+
           // Conectar WebSocket
           socketService.connect(token);
         } catch (error) {
-          localStorage.removeItem('token');
-          set({ user: null, token: null, isAuthenticated: false });
+          localStorage.removeItem("token");
+          set({ user: null, accessToken: null, isAuthenticated: false });
         }
       },
     }),
     {
-      name: 'auth-storage',
-      partialize: (state) => ({ token: state.token, user: state.user }),
+      name: "auth-storage",
+      partialize: (state) => ({ token: state.accessToken, user: state.user }),
     }
   )
 );

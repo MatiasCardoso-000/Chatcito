@@ -77,6 +77,7 @@ const createUser = async (req: Request, res: Response): Promise<Response> => {
 
 const login = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
+  
   try {
     const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
@@ -96,7 +97,6 @@ const login = async (req: Request, res: Response): Promise<Response> => {
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    console.log(email, password);
 
     return res.json({
       succes: true,
