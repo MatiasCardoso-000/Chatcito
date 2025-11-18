@@ -3,11 +3,14 @@ import { User } from "../models/user";
 import bcrypt from "bcrypt";
 import { createToken } from "../utils/createToken";
 import { Follow } from "../models/follow";
-import { success } from "zod";
 import { Post } from "../models/posts";
-
+import jwt from "jsonwebtoken";
 interface AuthRequest extends Request {
   user?: { id: string };
+}
+
+interface TokenPayload {
+  id: string;
 }
 
 const createUser = async (req: Request, res: Response): Promise<Response> => {
@@ -77,7 +80,7 @@ const createUser = async (req: Request, res: Response): Promise<Response> => {
 
 const login = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
-  
+
   try {
     const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
@@ -392,6 +395,54 @@ const getFollowing = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
+const refreshToken = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        message: "Acceso denegado. No se proveyó un token de refresco.",
+      });
+    }
+
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+      throw new Error(
+        "La clave secreta para el Refresh Token no está definida."
+      );
+    }
+
+    const decodedPayload = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    ) as TokenPayload;
+
+    const user = await User.findByPk(decodedPayload.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+
+    if (!process.env.ACCES_TOKEN_SECRET) {
+      throw new Error(
+        "La clave secreta para el Access Token no está definida."
+      );
+    }
+
+    const newAccessToken = jwt.sign(
+      { id: decodedPayload.id },
+      process.env.ACCES_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.json({ user, accessToken: newAccessToken });
+  } catch (error) {
+    console.error("Error al refrescar el token:", error);
+    return res
+      .status(403)
+      .json({ message: "Token de refresco inválido o expirado." });
+  }
+};
+
 export const userController = {
   createUser,
   login,
@@ -399,4 +450,5 @@ export const userController = {
   toggleFollow,
   getFollowers,
   getFollowing,
+  refreshToken
 };

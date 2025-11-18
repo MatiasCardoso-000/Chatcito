@@ -23,14 +23,11 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
   const [editContent, setEditContent] = useState('');
 
   // Cargar comentarios
-  useEffect(() => {
-    loadComments();
-  }, [postId]);
 
-  const loadComments = async () => {
+  useEffect(() => {
+      const loadComments = async () => {
     try {
       const response = await commentsAPI.getByPost(postId);
-      console.log(response.data);
       
       const loadedComments = response.data.data
       if (response.data.success) {
@@ -43,6 +40,10 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
     }
   };
 
+    loadComments();
+  }, [postId]);
+
+
   // Crear comentario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +52,10 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
     setIsLoading(true);
     try {
       const response = await commentsAPI.create(postId, newComment);
+      const newCommentResponse = response.data.data
+
       if (response.data.success) {
-        setComments([response.data.data, ...comments]);
+        setComments([newCommentResponse, ...comments]);
         setNewComment('');
         if (onCommentAdded) {
           onCommentAdded();
@@ -102,11 +105,11 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100">
+    <div className="mt-4 pt-4 border-t border-zinc-800">
       {/* Form para nuevo comentario */}
       <form onSubmit={handleSubmit} className="mb-4">
         <div className="flex gap-2">
-          <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+          <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-zinc-800 text-sm font-semibold shrink-0">
             {user?.username.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 flex gap-2">
@@ -115,7 +118,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Escribe un comentario..."
-              className="input"
+              className="input w-full placeholder:text-zinc-800"
               maxLength={500}
               disabled={isLoading}
             />
@@ -124,7 +127,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
               disabled={isLoading || !newComment.trim()}
               className="btn btn-primary px-4"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 text-zinc-800" />
             </button>
           </div>
         </div>
@@ -133,11 +136,11 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
       {/* Lista de comentarios */}
       <div className="space-y-3">
         {isLoadingComments ? (
-          <p className="text-center text-gray-500 text-sm py-4">
+          <p className="text-center text-zinc-500 text-sm py-4">
             Cargando comentarios...
           </p>
         ) : comments.length === 0 ? (
-          <p className="text-center text-gray-500 text-sm py-4">
+          <p className="text-center text-zinc-500 text-sm py-4">
             No hay comentarios aún
           </p>
         ) : (
@@ -152,7 +155,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
               <div className="flex-1">
                 <div className="bg-gray-50 rounded-lg px-3 py-2">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-sm text-gray-900">
+                    <span className="font-semibold text-sm text-zinc-900">
                       {comment.User.username}
                     </span>
                     
@@ -183,7 +186,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="input text-sm"
+                        className="input text-sm w-full text-zinc-800 p-2"
                         maxLength={500}
                         autoFocus
                       />
@@ -193,7 +196,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
                             setEditingId(null);
                             setEditContent('');
                           }}
-                          className="text-xs px-2 py-1 hover:bg-gray-200 rounded"
+                          className="text-xs text-zinc-800 cursor-pointer px-2 py-1 hover:bg-gray-200 rounded"
                         >
                           Cancelar
                         </button>
@@ -206,7 +209,7 @@ const CommentSection = ({ postId, onCommentAdded }: CommentSectionProps) => {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-800">
+                    <p className="text-sm text-zinc-800">
                       {comment.content}
                     </p>
                   )}

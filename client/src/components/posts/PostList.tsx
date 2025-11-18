@@ -1,5 +1,3 @@
-// src/components/posts/PostList.tsx
-
 import { useState, useEffect } from "react";
 import type { Post } from "../../types";
 import PostCard from "./PostCard";

@@ -12,8 +12,8 @@ const createComment = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { content} = req.body;
-    const {postId} = req.params
+    const { content } = req.body;
+    const { postId } = req.params;
     const UserId = req.user?.id;
 
     if (!content || content.trim().length === 0) {
@@ -68,7 +68,7 @@ const createComment = async (
 };
 
 const getCommentsByPost = async (req: Request, res: Response) => {
-   try {
+  try {
     const { postId } = req.params;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -76,13 +76,15 @@ const getCommentsByPost = async (req: Request, res: Response) => {
 
     const { count, rows: comments } = await Comment.findAndCountAll({
       where: { PostId: postId },
-      include: [{
-        model: User,
-        attributes: ['id', 'username', 'profileImage']
-      }],
-      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          attributes: ["id", "username", "profileImage"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
       limit,
-      offset
+      offset,
     });
 
     return res.json({
@@ -92,21 +94,21 @@ const getCommentsByPost = async (req: Request, res: Response) => {
         total: count,
         page,
         limit,
-        totalPages: Math.ceil(count / limit)
-      }
+        totalPages: Math.ceil(count / limit),
+      },
     });
   } catch (err) {
     console.error("Error:", err);
     return res.status(500).json({
       success: false,
-      message: "Error al obtener comentarios"
+      message: "Error al obtener comentarios",
     });
   }
 };
 
 const getCommentsByUser = async (req: AuthRequest, res: Response) => {
   try {
-    const  userId = req.user?.id;
+    const userId = req.user?.id;
 
     const comments = await Comment.findAll({
       where: { UserId: userId },
@@ -139,8 +141,11 @@ const getCommentsByUser = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// GET 
-const getCommentById = async (req: Request, res: Response): Promise<Response> => {
+// GET
+const getCommentById = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const { commentId } = req.params;
 
@@ -148,19 +153,19 @@ const getCommentById = async (req: Request, res: Response): Promise<Response> =>
       include: [
         {
           model: User,
-          attributes: ['id', 'username', 'profileImage']
+          attributes: ["id", "username", "profileImage"],
         },
         {
           model: Post,
-          attributes: ['id', 'content']
-        }
-      ]
+          attributes: ["id", "content"],
+        },
+      ],
     });
 
     if (!comment) {
       return res.status(404).json({
         success: false,
-        message: "Comentario no encontrado"
+        message: "Comentario no encontrado",
       });
     }
 
@@ -169,12 +174,10 @@ const getCommentById = async (req: Request, res: Response): Promise<Response> =>
     console.error("Error:", err);
     return res.status(500).json({
       success: false,
-      message: "Error al obtener el comentario"
+      message: "Error al obtener el comentario",
     });
   }
 };
-
-
 
 const updateComment = async (req: AuthRequest, res: Response) => {
   try {

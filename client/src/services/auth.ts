@@ -9,5 +9,5 @@ export const authAPI = {
     api.post<AuthResponse>('/auth/login', data),
   
   getMe: () =>
-    api.get<ApiResponse<User>>('/me'),
+    api.get<ApiResponse<User>>(`/auth/users/${1}`),
 };

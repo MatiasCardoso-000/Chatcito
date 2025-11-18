@@ -15,6 +15,8 @@ import { Message } from "./models/Message";
 import { Server } from "socket.io";
 import http from "node:http";
 import cors from "cors";
+import bodyParser from "cookie-parser"
+
 
 const app = express();
 
@@ -38,6 +40,10 @@ app.use(
     credentials: true,
   })
 );
+app.use(bodyParser())
+
+
+
 app.use("/api/auth", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentsRoutes);

@@ -35,7 +35,6 @@ export const useAuthStore = create<AuthState>()(
           const response = await authAPI.login({ email, password });
           
           const { user, accessToken } = await response.data;
-          console.log(user);
           
           localStorage.setItem("token", accessToken);
           set({ user, accessToken, isAuthenticated: true, isLoading: false });
@@ -77,6 +76,8 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         const token = localStorage.getItem("token");
+        console.log(token);
+        
         if (!token) {
           set({ isAuthenticated: false });
           return;
@@ -84,7 +85,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authAPI.getMe();
-          set({ user: response.data.data, accessToken, isAuthenticated: true });
+          set({ user: response.data.data, accessToken: token , isAuthenticated: true });
 
           // Conectar WebSocket
           socketService.connect(token);

@@ -18,7 +18,7 @@ interface PostCardProps {
 const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
   const { user } = useAuthStore();
   const [isLiked, setIsLiked] = useState(post.isLikedByUser);
-  const [likesCount, setLikesCount] = useState(post.likesCount);
+  const [likesCount, setLikesCount] = useState(post.commentsCount);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,18 +99,18 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
   });
 
   return (
-    <div className="card hover:shadow-md transition-shadow">
+    <div className="card border border-zinc-800 bg-zinc-100 px-2 py-6 rounded-md">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 rounded-full bg-zinc-900 from-primary-400 to-primary-600 flex items-center justify-center text-zinc-100 font-semibold">
             {post.User.username.charAt(0).toUpperCase()}
           </div>
 
           {/* User info */}
           <div>
-            <h3 className="font-semibold text-white-900">
+            <h3 className="font-semibold text-zinc-900 ">
               {post.User.username}
             </h3>
             <p className="text-sm text-gray-500">{timeAgo}</p>
@@ -124,7 +124,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
               onClick={() => setShowMenu(!showMenu)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <MoreVertical className="w-5 h-5 text-gray-500" />
+              <MoreVertical className="w-5 h-5 text-zinc-900 " />
             </button>
 
             {showMenu && (
@@ -134,7 +134,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
                     setIsEditing(true);
                     setShowMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-zinc-900 "
                 >
                   <Edit2 className="w-4 h-4" />
                   Editar
@@ -186,22 +186,22 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
             </div>
           </div>
         ) : (
-          <p className="text-white-800 whitespace-pre-wrap leading-relaxed">
+          <p className="text-zinc-900  whitespace-pre-wrap leading-relaxed">
             {post.content}
           </p>
         )}
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
+      <div className="flex items-center gap-6 pt-4 border-t border-zinc-800">
         {/* Like */}
         <button
           onClick={handleLike}
           className={`flex items-center gap-2 transition-colors ${
             isLiked
               ? 'text-red-500'
-              : 'text-white hover:text-red-500'
-          }`}
+              : 'text-zinc-900  hover:text-red-500'
+          } cursor-pointer`}
         >
           <Heart
             className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
@@ -212,10 +212,10 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
         {/* Comments */}
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-2 text-white hover:text-primary-600 transition-colors"
+          className="flex items-center gap-2 text-zinc-900  hover:text-zinc-200 transition-colors cursor-pointer"
         >
           <MessageCircle className="w-5 h-5" />
-          <span className="text-sm font-medium">{post.commentsCount}</span>
+          <span className="text-sm font-medium text-zinc-800">{post.commentsCount}</span>
         </button>
       </div>
 

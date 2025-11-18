@@ -1,5 +1,8 @@
+import { useAuthStore } from "../../store/authStore";
 
 const Navbar = () => {
+  const { isAuthenticated, user } = useAuthStore();
+
   return (
     <nav className="bg-gray-900 shadow-lg">
       <div className="container mx-auto px-4">
@@ -9,10 +12,26 @@ const Navbar = () => {
               Chatcito
             </a>
           </div>
-          <div>
-            <a href="/login" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Login</a>
-            <a href="/register" className="text-gray-300 hover:text-white ml-4 px-3 py-2 rounded-md text-sm font-medium">Register</a>
-          </div>
+          {isAuthenticated ? (
+            <div>
+              <h3>{user?.username}</h3>
+            </div>
+          ) : (
+            <div>
+              <a
+                href="/login"
+                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Login
+              </a>
+              <a
+                href="/register"
+                className="text-gray-300 hover:text-white ml-4 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Register
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </nav>
