@@ -5,6 +5,7 @@ import { createToken } from "../utils/createToken";
 import { Follow } from "../models/follow";
 import { Post } from "../models/posts";
 import jwt from "jsonwebtoken";
+import { success } from "zod";
 interface AuthRequest extends Request {
   user?: { id: string };
 }
@@ -434,7 +435,13 @@ const refreshToken = async (req: Request, res: Response) => {
       { expiresIn: "15m" }
     );
 
-    res.json({ user, accessToken: newAccessToken });
+    const userWithoutPassword = {
+      username: user.get("username"),
+      id: user.get("id"),
+      profileImage: user.get("profileImage"),
+    };
+
+    return res.json({ success: true, userWithoutPassword, accessToken: newAccessToken });
   } catch (error) {
     console.error("Error al refrescar el token:", error);
     return res
@@ -450,5 +457,5 @@ export const userController = {
   toggleFollow,
   getFollowers,
   getFollowing,
-  refreshToken
+  refreshToken,
 };

@@ -69,6 +69,12 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface RefreshTokenResponse {
+  success: boolean;
+  userWithoutPassword: User;
+  accessToken: string;
+}
+
 export interface PaginatedResponse<T> {
   success: boolean;
   data: T[];

@@ -21,7 +21,7 @@ const PostList = ({ type }: PostListProps) => {
     setIsLoading(true);
     try {
       const response = await postsAPI.getPosts(1, 10);
-      
+
       if (response.data.success) {
         setPosts(response.data.data);
       }
@@ -84,14 +84,16 @@ const PostList = ({ type }: PostListProps) => {
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-        />
-      ))}
+      {posts.map((post) => {
+        return (
+          <PostCard
+            key={post.id}
+            post={post}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          />
+        );
+      })}
 
       {hasMore && (
         <button onClick={loadMore} className="w-full btn btn-secondary">

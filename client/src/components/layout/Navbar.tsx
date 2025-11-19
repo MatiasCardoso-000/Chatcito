@@ -1,37 +1,64 @@
 import { useAuthStore } from "../../store/authStore";
+import { Link } from "react-router-dom";
+import Dropdown from "../common/Dropdown";
 
 const Navbar = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  const authLinks = (
+    <div className="py-1">
+      <Link
+        to="/profile"
+        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+      >
+        Profile
+      </Link>
+      <button
+        onClick={handleLogout}
+        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+      >
+        Logout
+      </button>
+    </div>
+  );
+
+  const guestLinks = (
+    <div className="py-1">
+      <Link
+        to="/login"
+        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+      >
+        Login
+      </Link>
+      <Link
+        to="/register"
+        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+      >
+        Register
+      </Link>
+    </div>
+  );
 
   return (
     <nav className="bg-gray-900 shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           <div>
-            <a href="/" className="text-2xl font-bold text-white">
+            <Link to="/" className="text-2xl font-bold text-white">
               Chatcito
-            </a>
+            </Link>
           </div>
-          {isAuthenticated ? (
-            <div>
-              <h3>{user?.username}</h3>
-            </div>
-          ) : (
-            <div>
-              <a
-                href="/login"
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Login
-              </a>
-              <a
-                href="/register"
-                className="text-gray-300 hover:text-white ml-4 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Register
-              </a>
-            </div>
-          )}
+          <div>
+            <Dropdown content={isAuthenticated ? authLinks : guestLinks}>
+              <button className="text-white focus:outline-none">
+                {isAuthenticated ? user?.username : "Menu"}
+              </button>
+            </Dropdown>
+          </div>
         </div>
       </div>
     </nav>

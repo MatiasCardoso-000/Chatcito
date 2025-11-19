@@ -11,6 +11,7 @@ interface AuthState {
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  errors: string[];
   login: (email: string, password: string) => Promise<void>;
   register: (
     username: string,
@@ -28,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       isAuthenticated: false,
       isLoading: false,
-
+      errors: [],
       login: async (email, password) => {
         set({ isLoading: true });
         try {
@@ -76,22 +77,30 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         const token = localStorage.getItem("token");
-        console.log(token);
         
+        const response = await authAPI.verifyToken()
+        
+        const {id} = response.data.userWithoutPassword
+
+        
+
         if (!token) {
           set({ isAuthenticated: false });
           return;
         }
 
         try {
-          const response = await authAPI.getMe();
+          const response = await authAPI.getMe(id);
           set({ user: response.data.data, accessToken: token , isAuthenticated: true });
-
+          
           // Conectar WebSocket
           socketService.connect(token);
         } catch (error) {
           localStorage.removeItem("token");
           set({ user: null, accessToken: null, isAuthenticated: false });
+          set({errors: error as string[]})
+          console.log(error);
+          
         }
       },
     }),

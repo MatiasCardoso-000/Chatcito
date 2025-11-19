@@ -16,13 +16,21 @@ const createPost = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const id = req.user!.id;
+    const id = req.user?.id;
+
+    
     const { content } = req.body;
     const post = await Post.create({
       content,
       user_id: id, // viene del middleware de autenticación
     });
-    return res.json(post);
+
+    const newPost = {
+      content: post.get("content"),
+      user_id: post.get("user_id")
+    }
+
+    return res.json(newPost);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ message });

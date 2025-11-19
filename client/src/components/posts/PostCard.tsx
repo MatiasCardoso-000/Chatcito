@@ -122,7 +122,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
             >
               <MoreVertical className="w-5 h-5 text-zinc-900 " />
             </button>

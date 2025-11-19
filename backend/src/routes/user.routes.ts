@@ -31,3 +31,5 @@ router.get('/users/:userId/following', validateToken, userController.getFollowin
 
 //Perfil de usuario
 router.get("/users/:userId", validateToken, userController.getUserProfile);
+
+router.post("/refresh-token",userController.refreshToken)

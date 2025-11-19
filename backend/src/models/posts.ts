@@ -8,6 +8,11 @@ export const Post = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    user_id: {
+      type: DataTypes.NUMBER,
+      allowNull: false,
+      field: "user_id",
+    },
   },
   {
     tableName: "posts",
