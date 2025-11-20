@@ -23,6 +23,7 @@ export interface Post {
   author: string;
   timestamp: string;
   avatar: string;
+  count:number;
 }
 
 export interface Comment {
@@ -67,6 +68,8 @@ export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+  liked:boolean
+  count:number;
 }
 
 export interface RefreshTokenResponse {

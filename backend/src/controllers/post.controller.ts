@@ -18,7 +18,6 @@ const createPost = async (
   try {
     const id = req.user?.id;
 
-    
     const { content } = req.body;
     const post = await Post.create({
       content,
@@ -27,8 +26,8 @@ const createPost = async (
 
     const newPost = {
       content: post.get("content"),
-      user_id: post.get("user_id")
-    }
+      user_id: post.get("user_id"),
+    };
 
     return res.json(newPost);
   } catch (err) {
@@ -65,7 +64,10 @@ const getPosts = async (req: Request, res: Response): Promise<Response> => {
     }
   });
 
-  return res.json({ success: true, data: postsWithLikes });
+  return res.json({
+    success: true,
+    data: postsWithLikes,
+  });
 };
 
 const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
@@ -113,10 +115,13 @@ const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
       const comments = (post.get("comments") as any[]) || [];
       const commentsCount = Array.isArray(comments) ? comments.length : 0;
 
+      const isOwnPost = post.get("user_id") === user.get("id");
+
       return {
         ...post.toJSON(),
         likesCount,
         commentsCount,
+        isOwnPost
       };
     });
 
@@ -149,34 +154,33 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: 'Usuario no autenticado'
+        message: "Usuario no autenticado",
       });
     }
 
     // Obtener IDs de usuarios que sigo + yo mismo
     const following = await Follow.findAll({
       where: { follower_id: userId },
-      attributes: ['following_id'],
-      raw: true
+      attributes: ["following_id"],
+      raw: true,
     });
 
-
-    const followingIds = following.map(f => {
-   return f.get("following_id")
+    const followingIds = following.map((f) => {
+      return f.get("following_id");
     });
     const userIdsToShow = [...followingIds, userId];
 
     // Posts con subqueries para counts (MÁS EFICIENTE)
     const { count, rows: posts } = await Post.findAndCountAll({
       where: {
-        UserId: { [Op.in]: userIdsToShow }
+        UserId: { [Op.in]: userIdsToShow },
       },
       attributes: [
-        'id',
-        'content',
-        'UserId',
-        'createdAt',
-        'updatedAt',
+        "id",
+        "content",
+        "UserId",
+        "createdAt",
+        "updatedAt",
         // Subquery para contar likes
         [
           sequelize.literal(`(
@@ -184,7 +188,7 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
             FROM post_likes
             WHERE post_likes."postLiked_id" = "Post"."id"
           )`),
-          'likesCount'
+          "likesCount",
         ],
         // Subquery para contar comentarios
         [
@@ -193,7 +197,7 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
             FROM comment
             WHERE comment."post_id" = "Post"."id"
           )`),
-          'commentsCount'
+          "commentsCount",
         ],
         // Subquery para verificar si el usuario dio like
         [
@@ -203,29 +207,29 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
             WHERE post_likes."postLiked_id" = "Post"."id"
             AND post_likes."liker_id" = ${userId}
           )`),
-          'isLikedByUser'
-        ]
+          "isLikedByUser",
+        ],
       ],
       include: [
         {
           model: User,
-          attributes: ['id', 'username', 'profileImage']
-        }
+          attributes: ["id", "username", "profileImage"],
+        },
       ],
-      order: [['createdAt', 'DESC']],
+      order: [["createdAt", "DESC"]],
       limit,
       offset,
-      subQuery: false
+      subQuery: false,
     });
 
-    const postsWithData = posts.map(post => {
+    const postsWithData = posts.map((post) => {
       const postJSON = post.toJSON();
       return {
         ...postJSON,
         likesCount: parseInt(postJSON.likesCount) || 0,
         commentsCount: parseInt(postJSON.commentsCount) || 0,
         isLikedByUser: Boolean(postJSON.isLikedByUser),
-        isOwnPost: postJSON.UserId === userId
+        isOwnPost: postJSON.UserId === userId,
       };
     });
 
@@ -237,15 +241,14 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
         page,
         limit,
         totalPages: Math.ceil(count / limit),
-        hasMore: page < Math.ceil(count / limit)
-      }
+        hasMore: page < Math.ceil(count / limit),
+      },
     });
-
   } catch (err) {
-    console.error('Error obteniendo feed:', err);
+    console.error("Error obteniendo feed:", err);
     return res.status(500).json({
       success: false,
-      message: 'Error al obtener el feed'
+      message: "Error al obtener el feed",
     });
   }
 };
@@ -366,7 +369,7 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
     const likesCount = (post?.get("likers") as any[]) || [];
 
     return res.json({
-      succes: true,
+      success: true,
       liked,
       likes: Array.isArray(likesCount) ? likesCount.length : 0,
       message: liked ? "Te gusto el post" : "Te ha dejado de gustar el post",

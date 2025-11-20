@@ -1,13 +1,18 @@
 // src/components/posts/PostCard.tsx
 
-import { useState } from 'react';
-import { Heart, MessageCircle, Trash2, Edit2, MoreVertical } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import type { Post } from '../../types';
-import { useAuthStore } from '../../store/authStore';
-import CommentSection from './CommentSection';
-import { postsAPI } from '../../services/posts';
+import { useEffect, useState } from "react";
+import {
+  Heart,
+  MessageCircle,
+  Trash2,
+  Edit2,
+  MoreVertical,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+import type { Post } from "../../types";
+import CommentSection from "./CommentSection";
+import { postsAPI } from "../../services/posts";
 
 interface PostCardProps {
   post: Post;
@@ -16,35 +21,56 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
-  const { user } = useAuthStore();
   const [isLiked, setIsLiked] = useState(post.isLikedByUser);
   const [likesCount, setLikesCount] = useState(post.commentsCount);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const handleCommentsCount = async () => {
+      try {
+        const respose = await postsAPI.getCommentsCount(post.id);
+        setCommentsCount(respose.data.count);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    handleCommentsCount();
+  }, [post.id]);
+
+  useEffect(() => {
+    const handleUserPosts = async () => {
+      try {
+        const response =await postsAPI.getById(post.UserId);
+
+        console.log(response);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    handleUserPosts();
+  }, [post.UserId]);
+
   // Toggle Like
   const handleLike = async () => {
     try {
-      const previousState = { isLiked, likesCount };
-      
-      // Optimistic update
-      setIsLiked(!isLiked);
-      setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
-
       const response = await postsAPI.toggleLike(post.id);
-      
-      // Actualizar con respuesta del servidor
+
       if (response.data.success) {
-        setIsLiked(response.data.data.liked);
+        setIsLiked(!isLiked);
+        setIsLiked(response.data.liked);
+        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
       }
     } catch (error) {
       // Revertir en caso de error
       setIsLiked(isLiked);
       setLikesCount(likesCount);
-      console.error('Error al dar like:', error);
+      console.error("Error al dar like:", error);
     }
   };
 
@@ -64,8 +90,8 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
         setShowMenu(false);
       }
     } catch (error) {
-      console.error('Error al editar post:', error);
-      alert('Error al editar el post');
+      console.error("Error al editar post:", error);
+      alert("Error al editar el post");
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +99,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
 
   // Eliminar post
   const handleDelete = async () => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este post?')) {
+    if (!confirm("¿Estás seguro de que quieres eliminar este post?")) {
       return;
     }
 
@@ -85,8 +111,8 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
       }
       setShowMenu(false);
     } catch (error) {
-      console.error('Error al eliminar post:', error);
-      alert('Error al eliminar el post');
+      console.error("Error al eliminar post:", error);
+      alert("Error al eliminar el post");
     } finally {
       setIsLoading(false);
     }
@@ -181,7 +207,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
                 className="btn btn-primary"
                 disabled={isLoading || !editContent.trim()}
               >
-                {isLoading ? 'Guardando...' : 'Guardar'}
+                {isLoading ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </div>
@@ -198,35 +224,35 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
         <button
           onClick={handleLike}
           className={`flex items-center gap-2 transition-colors ${
-            isLiked
-              ? 'text-red-500'
-              : 'text-zinc-900  hover:text-red-500'
+            isLiked ? "text-red-500" : "text-zinc-900  hover:text-red-500"
           } cursor-pointer`}
         >
-          <Heart
-            className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
-          />
-          <span className="text-sm font-medium">{likesCount}</span>
+          <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
+          <span className="text-sm font-medium">{post.likesCount}</span>
         </button>
-
         {/* Comments */}
         <button
           onClick={() => setShowComments(!showComments)}
           className="flex items-center gap-2 text-zinc-900  hover:text-zinc-200 transition-colors cursor-pointer"
         >
           <MessageCircle className="w-5 h-5" />
-          <span className="text-sm font-medium text-zinc-800">{post.commentsCount}</span>
+          <span className="text-sm font-medium text-zinc-800">
+            {commentsCount}
+          </span>
         </button>
       </div>
 
       {/* Comment Section */}
       {showComments && (
-        <CommentSection postId={post.id} onCommentAdded={() => {
-          // Actualizar contador de comentarios
-          if (onUpdate) {
-            onUpdate({ ...post, commentsCount: post.commentsCount + 1 });
-          }
-        }} />
+        <CommentSection
+          postId={post.id}
+          onCommentAdded={() => {
+            // Actualizar contador de comentarios
+            if (onUpdate) {
+              onUpdate({ ...post, commentsCount: post.commentsCount + 1 });
+            }
+          }}
+        />
       )}
     </div>
   );

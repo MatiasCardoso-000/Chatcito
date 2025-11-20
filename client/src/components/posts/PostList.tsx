@@ -21,7 +21,7 @@ const PostList = ({ type }: PostListProps) => {
     setIsLoading(true);
     try {
       const response = await postsAPI.getPosts(1, 10);
-
+      
       if (response.data.success) {
         setPosts(response.data.data);
       }
