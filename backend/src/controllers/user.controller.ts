@@ -208,10 +208,10 @@ const toggleFollow = async (
 ): Promise<Response> => {
   try {
     const { userId } = req.params; // A quién seguir
-    const followerId = req.user?.id; // Quién sigue
+    const follower_id = req.user?.id; // Quién sigue
 
     // 1. Validar autenticación
-    if (!followerId) {
+    if (!follower_id) {
       return res.status(401).json({
         success: false,
         message: "Usuario no autenticado",
@@ -227,7 +227,7 @@ const toggleFollow = async (
     }
 
     // 3. Validar que no se siga a sí mismo
-    if (Number(userId) === Number(followerId)) {
+    if (Number(userId) === Number(follower_id)) {
       return res.status(400).json({
         success: false,
         message: "No puedes seguirte a ti mismo",
@@ -245,7 +245,7 @@ const toggleFollow = async (
 
     // 5. Toggle follow
     const existingFollow = await Follow.findOne({
-      where: { followerId, followingId: userId },
+      where: { follower_id: follower_id, following_id: userId },
     });
 
     let following = false;
@@ -256,7 +256,7 @@ const toggleFollow = async (
       following = false;
     } else {
       // Seguir
-      await Follow.create({ followerId, followingId: userId });
+      await Follow.create({ follower_id: follower_id, following_id: userId });
       following = true;
     }
 

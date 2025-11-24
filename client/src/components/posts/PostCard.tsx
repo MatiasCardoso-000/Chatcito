@@ -13,6 +13,7 @@ import { es } from "date-fns/locale";
 import type { Post } from "../../types";
 import CommentSection from "./CommentSection";
 import { postsAPI } from "../../services/posts";
+import { usePostStore } from "../../store/postStore";
 
 interface PostCardProps {
   post: Post;
@@ -21,14 +22,15 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
-  const [isLiked, setIsLiked] = useState(post.isLikedByUser);
-  const [likesCount, setLikesCount] = useState(post.commentsCount);
+  const [isLiked, setIsLiked] = useState(post.liked);
+  const [likesCount, setLikesCount] = useState(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const { update,isLoading } = usePostStore();
 
   useEffect(() => {
     const handleCommentsCount = async () => {
@@ -42,34 +44,21 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
     handleCommentsCount();
   }, [post.id]);
 
-  useEffect(() => {
-    const handleUserPosts = async () => {
-      try {
-        const response =await postsAPI.getById(post.UserId);
-
-        console.log(response);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    handleUserPosts();
-  }, [post.UserId]);
-
   // Toggle Like
   const handleLike = async () => {
+    const prevLiked = isLiked;
+    const prevCount = likesCount;
+
     try {
       const response = await postsAPI.toggleLike(post.id);
-
       if (response.data.success) {
-        setIsLiked(!isLiked);
         setIsLiked(response.data.liked);
-        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+        setLikesCount(response.data.likes);
       }
     } catch (error) {
       // Revertir en caso de error
-      setIsLiked(isLiked);
-      setLikesCount(likesCount);
+      setIsLiked(prevLiked);
+      setLikesCount(prevCount);
       console.error("Error al dar like:", error);
     }
   };
@@ -80,21 +69,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
       setIsEditing(false);
       return;
     }
-
-    setIsLoading(true);
-    try {
-      const response = await postsAPI.update(post.id, editContent);
-      if (response.data.success && onUpdate) {
-        onUpdate(response.data.data);
-        setIsEditing(false);
-        setShowMenu(false);
-      }
-    } catch (error) {
-      console.error("Error al editar post:", error);
-      alert("Error al editar el post");
-    } finally {
-      setIsLoading(false);
-    }
+    update(post.id, editContent);
   };
 
   // Eliminar post
@@ -186,7 +161,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="input min-h-[100px] resize-none"
+              className="input min-h-[100px] resize-none text-zinc-800 p-1"
               placeholder="¿Qué estás pensando?"
               maxLength={500}
               autoFocus
@@ -197,14 +172,14 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
                   setIsEditing(false);
                   setEditContent(post.content);
                 }}
-                className="btn btn-secondary"
+                className="btn btn-secondary text-zinc-800"
                 disabled={isLoading}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleEdit}
-                className="btn btn-primary"
+                className="btn btn-primary text-zinc-800"
                 disabled={isLoading || !editContent.trim()}
               >
                 {isLoading ? "Guardando..." : "Guardar"}
@@ -228,7 +203,7 @@ const PostCard = ({ post, onUpdate, onDelete }: PostCardProps) => {
           } cursor-pointer`}
         >
           <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-          <span className="text-sm font-medium">{post.likesCount}</span>
+          <span className="text-sm font-medium">{likesCount}</span>
         </button>
         {/* Comments */}
         <button

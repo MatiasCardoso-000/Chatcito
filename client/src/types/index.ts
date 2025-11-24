@@ -16,7 +16,7 @@ export interface Post {
   User: User;
   likesCount: number;
   commentsCount: number;
-  isLikedByUser: boolean;
+  liked: boolean;
   isOwnPost: boolean;
   createdAt: string;
   updatedAt: string;
@@ -69,6 +69,7 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   liked:boolean
+  likes:number;
   count:number;
 }
 

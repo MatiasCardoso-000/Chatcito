@@ -6,6 +6,7 @@ import { PostLike } from "../models/likes";
 import { Follow } from "../models/follow";
 import { Op } from "sequelize";
 import { sequelize } from "../config/database";
+import { count } from "console";
 
 interface AuthRequest extends Request {
   user?: { id: string };
@@ -36,8 +37,15 @@ const createPost = async (
   }
 };
 
-const getPosts = async (req: Request, res: Response): Promise<Response> => {
-  const posts = await Post.findAll({
+const getPublicPosts = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  const currentUserId = req.user?.id;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const offset = (page - 1) * limit;
+  const { count, rows: posts } = await Post.findAndCountAll({
     include: [
       {
         model: User,
@@ -49,17 +57,32 @@ const getPosts = async (req: Request, res: Response): Promise<Response> => {
         attributes: ["id"],
         through: { attributes: [] },
       },
+      {
+        model: Comment,
+        attributes: ["id"],
+      },
     ],
     order: [["createdAt", "DESC"]],
+    limit,
+    offset,
   });
 
   const postsWithLikes = posts.map((post) => {
     {
+      const likes = (post.get("likers") as any[]) || [];
       const likesCount = (post.get("likers") as any[]) || [];
+
+      const isLikedByUser = currentUserId
+        ? likes.some((liker) => liker.liker_id === currentUserId)
+        : false;
+
+      const isOwnPost = post.get("user_id") === currentUserId;
 
       return {
         ...post.toJSON(),
         likesCount: Array.isArray(likesCount) ? likesCount.length : 0,
+        isOwnPost,
+        isLikedByUser,
       };
     }
   });
@@ -67,12 +90,23 @@ const getPosts = async (req: Request, res: Response): Promise<Response> => {
   return res.json({
     success: true,
     data: postsWithLikes,
+    pagination: {
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      hasMore: page < Math.ceil(count / limit),
+    },
   });
 };
 
-const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
+const getUserPosts = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const { userId } = req.params;
+    const currentUserId = req.user?.id;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
@@ -115,13 +149,18 @@ const getUserPosts = async (req: Request, res: Response): Promise<Response> => {
       const comments = (post.get("comments") as any[]) || [];
       const commentsCount = Array.isArray(comments) ? comments.length : 0;
 
-      const isOwnPost = post.get("user_id") === user.get("id");
+      const isLikedByUser = currentUserId
+        ? likes.some((liker) => liker.liker_id === currentUserId)
+        : false;
+
+      const isOwnPost = post.get("user_id") === currentUserId;
 
       return {
         ...post.toJSON(),
         likesCount,
         commentsCount,
-        isOwnPost
+        isLikedByUser,
+        isOwnPost,
       };
     });
 
@@ -166,7 +205,7 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
     });
 
     const followingIds = following.map((f) => {
-      return f.get("following_id");
+      return f.following_id;
     });
     const userIdsToShow = [...followingIds, userId];
 
@@ -269,7 +308,7 @@ const updatePost = async (
 
     post.set("content", content);
     await post.save();
-    return res.json({ message: "Post actualizado", post });
+    return res.json({ message: "Post actualizado", post, success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ message });
@@ -397,7 +436,7 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
 
 export const postController = {
   createPost,
-  getPosts,
+  getPublicPosts,
   getFeed,
   getUserPosts,
   getCommentsCount,

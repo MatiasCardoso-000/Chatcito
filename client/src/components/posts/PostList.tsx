@@ -1,62 +1,46 @@
 import { useState, useEffect } from "react";
-import type { Post } from "../../types";
 import PostCard from "./PostCard";
-import { postsAPI } from "../../services/posts";
+import { usePostStore } from "../../store/postStore";
 
 interface PostListProps {
   type: "feed" | "all";
 }
 
 const PostList = ({ type }: PostListProps) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const { create, getFeed, posts, success, isLoading, toggleMenu, showMenu } =
+    usePostStore();
+
   useEffect(() => {
-    loadPosts();
-  }, [type]);
+    getFeed(1, 10);
+  }, [getFeed]);
 
-  const loadPosts = async () => {
-    setIsLoading(true);
-    try {
-      const response = await postsAPI.getPosts(1, 10);
-      
-      if (response.data.success) {
-        setPosts(response.data.data);
-      }
-    } catch (error) {
-      console.error("Error cargando posts:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const loadMore = async () => {
+  //   const nextPage = page + 1;
+  //   try {
+  //     const response =
+  //       type === "feed"
+  //         ?getFeed(nextPage, 10)
+  //         : getPosts(nextPage, 10);
 
-  const loadMore = async () => {
-    const nextPage = page + 1;
-    try {
-      const response =
-        type === "feed"
-          ? await postsAPI.getFeed(nextPage, 10)
-          : await postsAPI.getPosts(nextPage, 10);
+  //     if (success) {
+  //       setHasMore(response.data.pagination.hasMore);
+  //       setPage(nextPage);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error cargando más posts:", error);
+  //   }
+  // };
 
-      if (response.data.success) {
-        setPosts([...posts, ...response.data.data]);
-        setHasMore(response.data.pagination.hasMore);
-        setPage(nextPage);
-      }
-    } catch (error) {
-      console.error("Error cargando más posts:", error);
-    }
-  };
+  // const handleUpdate = (updatedPost: Post) => {
+  //   setPosts(posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+  // };
 
-  const handleUpdate = (updatedPost: Post) => {
-    setPosts(posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
-  };
-
-  const handleDelete = (postId: number) => {
-    setPosts(posts.filter((p) => p.id !== postId));
-  };
+  // const handleDelete = (postId: number) => {
+  //   setPosts(posts.filter((p) => p.id !== postId));
+  // };
 
   if (isLoading) {
     return (
@@ -84,21 +68,49 @@ const PostList = ({ type }: PostListProps) => {
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => {
-        return (
-          <PostCard
-            key={post.id}
-            post={post}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-          />
-        );
-      })}
+      <button
+        className="text-white font-semibold bg-green-400 px-2 rounded-md"
+        onClick={toggleMenu}
+      >
+        Create new post
+      </button>
+
+      {showMenu && (
+        <div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const content = formData.get("content") as string;
+              create(content)
+            }}
+          >
+            <textarea
+              placeholder="Que estas pensando?"
+              name="content"
+              className="w-full p-1 text-black"
+            />
+            <button className="text-white font-semibold bg-blue-400 px-2 rounded-md">
+              Crear
+            </button>
+          </form>
+        </div>
+      )}
+
+      {success &&
+        posts.map((post) => {
+          return (
+            <PostCard
+              key={post.id}
+              post={post}
+              // onUpdate={handleUpdate}
+              // onDelete={handleDelete}
+            />
+          );
+        })}
 
       {hasMore && (
-        <button onClick={loadMore} className="w-full btn btn-secondary">
-          Cargar más
-        </button>
+        <button className="w-full btn btn-secondary">Cargar más</button>
       )}
     </div>
   );

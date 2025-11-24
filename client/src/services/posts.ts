@@ -2,11 +2,11 @@ import type { ApiResponse, PaginatedResponse, Post } from "../types";
 import { api } from "./api";
 
 export const postsAPI = {
-  create: (content: string) => api.post<ApiResponse<Post>>("/", { content }),
+  create: (content: string) => api.post<ApiResponse<Post>>("/posts/", { content }),
 
   getFeed: (page = 1, limit = 10) => {
     return api.get<PaginatedResponse<Post>>(
-      `/feed?page=${page}&limit=${limit}`
+      `/posts/feed?page=${page}&limit=${limit}`
     );
   },
 
@@ -18,10 +18,10 @@ export const postsAPI = {
 
   getById: (postId: number) => {return api.get<ApiResponse<Post>>(`/posts/${postId}`)},
 
-  update: (postId: number, content: string) =>
-    api.put<ApiResponse<Post>>(`/${postId}`, { content }),
+  update: (postId: number, content: string) =>{
+  return  api.put<ApiResponse<Post>>(`/posts/update/${postId}`, { content })},
 
-  delete: (postId: number) => api.delete<ApiResponse<void>>(`/${postId}`),
+  delete: (postId: number) => api.delete<ApiResponse<void>>(`/posts/${postId}`),
 
   toggleLike: (postId: number) =>
     api.post<ApiResponse<{ liked: boolean }>>(`/posts/${postId}/like`),
