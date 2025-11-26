@@ -71,6 +71,7 @@ export interface ApiResponse<T> {
   liked:boolean
   likes:number;
   count:number;
+  updatedPost: Post
 }
 
 export interface RefreshTokenResponse {

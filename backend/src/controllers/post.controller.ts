@@ -307,8 +307,12 @@ const updatePost = async (
       return res.status(403).json({ error: "No autorizado" });
 
     post.set("content", content);
-    await post.save();
-    return res.json({ message: "Post actualizado", post, success: true });
+    const updatedPost = await post.save();
+    return res.json({
+      message: "Post actualizado",
+      updatedPost,
+      success: true,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ message });

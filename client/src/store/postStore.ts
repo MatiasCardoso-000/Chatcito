@@ -22,7 +22,7 @@ interface PostState {
   getPublicPosts: (page: number, limit: number) => Promise<void>;
   getById: (postId: number) => Promise<void>;
   update: (postId: number, content: string) => Promise<void>;
-  delete: (postId: number) => Promise<void>;
+  deletePost: (postId: number) => Promise<void>;
   toggleLike: (postId: number) => Promise<void>;
   getCommentsCount: (postId: number) => Promise<void>;
   toggleMenu: () => void;
@@ -91,10 +91,20 @@ export const usePostStore = create<PostState>()(
         try {
           set({ isLoading: true });
           const response = await postsAPI.update(postId, content);
-          const {success} = response.data
+          const { success, updatedPost } = response.data;
 
-          if(success){
-            set({isLoading:false})
+          if (success) {
+            set(
+              (state) => (
+                state.posts.map((p) => (p.id === postId ? updatedPost : p)),
+                {
+                  isLoading: false,
+                  success: true,
+                }
+              )
+            );
+          } else {
+            set({ isLoading: false, success: false });
           }
         } catch (error) {
           set({ isLoading: false });
@@ -103,12 +113,29 @@ export const usePostStore = create<PostState>()(
         }
       },
 
-      delete: async (_postId) => {
-        // stubbed: implement delete if needed
+      deletePost: async (postId) => {
+        try {
+          await postsAPI.deletePost(postId);
+        } catch (error) {
+          console.log(error);
+          throw error;
+        }
       },
 
-      toggleLike: async (_postId) => {
-        // stubbed: implement toggleLike if needed
+      toggleLike: async (postId) => {
+        try {
+          const response = await postsAPI.toggleLike(postId);
+          const { success, liked } = response.data;
+
+          if (success) {
+            set({ isLiked: liked, success: success });
+          } else {
+            set({ isLoading: false, success: success });
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
       },
 
       getCommentsCount: async (_postId) => {

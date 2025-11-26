@@ -103,8 +103,7 @@ const PostList = ({ type }: PostListProps) => {
             <PostCard
               key={post.id}
               post={post}
-              // onUpdate={handleUpdate}
-              // onDelete={handleDelete}
+            
             />
           );
         })}
