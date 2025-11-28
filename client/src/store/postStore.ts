@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { PaginatedResponse, Post } from "../types";
+import type { Post } from "../types";
 import { postsAPI } from "../services/posts";
-import type { AxiosResponse } from "axios";
 
 interface PostState {
   posts: Post[];
@@ -10,13 +9,15 @@ interface PostState {
   isLoading: boolean;
   page: number;
   hasMore: boolean;
-  isLiked: boolean;
+  liked: boolean;
   likesCount: number;
   commentsCount: number;
   showComments: boolean;
   showMenu: boolean;
   isEditing: boolean;
   editContent: string;
+  currentPostId: number;
+  isOwnPost:boolean;
   create: (content: string) => Promise<void>;
   getFeed: (page: number, limit: number) => Promise<void>;
   getPublicPosts: (page: number, limit: number) => Promise<void>;
@@ -36,14 +37,15 @@ export const usePostStore = create<PostState>()(
       isLoading: false,
       page: 1,
       hasMore: true,
-      isLiked: false,
+      liked: false,
       likesCount: 0,
       commentsCount: 0,
       showComments: false,
       showMenu: false,
       isEditing: false,
       editContent: "",
-
+      currentPostId: 0,
+      isOwnPost:false,
       create: async (content) => {
         try {
           await postsAPI.create(content);
@@ -91,18 +93,21 @@ export const usePostStore = create<PostState>()(
         try {
           set({ isLoading: true });
           const response = await postsAPI.update(postId, content);
-          const { success, updatedPost } = response.data;
-
+          const { success, updatedPost,isOwnPost } = response.data;
+          console.log(isOwnPost);
+          
           if (success) {
-            set(
-              (state) => (
-                state.posts.map((p) => (p.id === postId ? updatedPost : p)),
-                {
-                  isLoading: false,
-                  success: true,
-                }
-              )
-            );
+            set((state) => {
+              const updatePost = state.posts.map((p) =>
+                p.id === postId ? updatedPost : p
+              );
+              return {
+                posts: updatePost,
+                isLoading: false,
+                success: true,
+                isOwnPost:isOwnPost
+              };
+            });
           } else {
             set({ isLoading: false, success: false });
           }
@@ -125,12 +130,16 @@ export const usePostStore = create<PostState>()(
       toggleLike: async (postId) => {
         try {
           const response = await postsAPI.toggleLike(postId);
-          const { success, liked } = response.data;
-
+          const { success, liked, likesCount } = response.data;
           if (success) {
-            set({ isLiked: liked, success: success });
-          } else {
-            set({ isLoading: false, success: success });
+            set((state) => {
+              const updatedPost = state.posts.map((p) =>
+                p.id === postId
+                  ? { ...p, liked: liked, likesCount: likesCount }
+                  : p
+              );
+              return { posts: updatedPost, success: success };
+            });
           }
         } catch (error) {
           set({ isLoading: false });
@@ -138,7 +147,7 @@ export const usePostStore = create<PostState>()(
         }
       },
 
-      getCommentsCount: async (_postId) => {
+      getCommentsCount: async (postId) => {
         // stubbed: implement getCommentsCount if needed
       },
 

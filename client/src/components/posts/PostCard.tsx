@@ -20,8 +20,6 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post }: PostCardProps) => {
-  const [isLiked, setIsLiked] = useState(post.liked);
-  const [likesCount, setLikesCount] = useState(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -41,14 +39,12 @@ const PostCard = ({ post }: PostCardProps) => {
     };
     handleCommentsCount();
   }, [post.id]);
-   const handleLike = async () => {
+
+  const handleLike = async () => {
     toggleLike(post.id);
   };
   // Toggle Like
- useEffect(()=> {
-handleLike()
- 
- },[post.id,toggleLike])
+
   // Editar post
   const handleEdit = async () => {
     if (!editContent.trim() || editContent === post.content) {
@@ -66,11 +62,11 @@ handleLike()
     deletePost(post.id);
   };
 
-  // Formatear fecha
-  // const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
-  //   addSuffix: true,
-  //   locale: es,
-  // });
+ 
+  const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
+    addSuffix: true,
+    locale: es,
+  });
 
   return (
     <div className="card border border-zinc-800 bg-zinc-100 px-2 py-6 rounded-md">
@@ -79,15 +75,15 @@ handleLike()
         <div className="flex items-center gap-3">
           {/* Avatar */}
           <div className="w-10 h-10 rounded-full bg-zinc-900 from-primary-400 to-primary-600 flex items-center justify-center text-zinc-100 font-semibold">
-            {/* {post.User.username.charAt(0).toUpperCase()} */}
+            {post.User.username.charAt(0).toUpperCase()}
           </div>
 
           {/* User info */}
           <div>
             <h3 className="font-semibold text-zinc-900 ">
-              {/* {post.User.username} */}
+              {post.User.username}
             </h3>
-            {/* <p className="text-sm text-gray-500">{timeAgo}</p> */}
+            <p className="text-sm text-gray-500">{timeAgo}</p>
           </div>
         </div>
 
@@ -172,11 +168,11 @@ handleLike()
         <button
           onClick={handleLike}
           className={`flex items-center gap-2 transition-colors ${
-            isLiked ? "text-red-500" : "text-zinc-900  hover:text-red-500"
+            post.liked ? "text-red-500" : "text-zinc-900  hover:text-red-500"
           } cursor-pointer`}
         >
-          <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-          <span className="text-sm font-medium">{likesCount}</span>
+          <Heart className={`w-5 h-5 ${post.liked ? "fill-current" : ""}`} />
+          <span className="text-sm font-medium">{post.likesCount}</span>
         </button>
         {/* Comments */}
         <button

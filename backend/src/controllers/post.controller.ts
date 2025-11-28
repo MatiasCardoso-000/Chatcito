@@ -301,15 +301,23 @@ const updatePost = async (
   const { content } = req.body;
 
   try {
-    const post = await Post.findByPk(postId);
+    const post = await Post.findByPk(postId, {
+      include: [
+        {
+          model: User,
+          attributes: ["username", "id"],
+        },
+      ],
+    });
     if (!post) return res.status(404).json({ error: "Post no encontrado" });
-    if (post.get("UserId") !== userId)
+    if (post.get("user_id") !== userId)
       return res.status(403).json({ error: "No autorizado" });
 
     post.set("content", content);
     const updatedPost = await post.save();
     return res.json({
       message: "Post actualizado",
+      isOwnPost : post.get("user_id") === userId,
       updatedPost,
       success: true,
     });
@@ -414,7 +422,7 @@ const toggleLike = async (req: AuthRequest, res: Response) => {
     return res.json({
       success: true,
       liked,
-      likes: Array.isArray(likesCount) ? likesCount.length : 0,
+      likesCount: Array.isArray(likesCount) ? likesCount.length : 0,
       message: liked ? "Te gusto el post" : "Te ha dejado de gustar el post",
       post,
     });

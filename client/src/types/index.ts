@@ -69,9 +69,10 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   liked:boolean
-  likes:number;
+  likesCount:number;
   count:number;
-  updatedPost: Post
+  updatedPost: Post;
+  isOwnPost:boolean;
 }
 
 export interface RefreshTokenResponse {
