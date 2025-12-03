@@ -24,27 +24,34 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      accessToken: null,
+      accessToken: localStorage.getItem("token") || null,
       isAuthenticated: false,
       isLoading: false,
       errors: [],
+
       login: async (email, password) => {
         set({ isLoading: true });
         try {
           const response = await authAPI.login({ email, password });
-          
+
           const { user, accessToken } = await response.data;
-          
-          localStorage.setItem("token", accessToken);
-          set({ user, accessToken, isAuthenticated: true, isLoading: false });
+
+          set({
+            user,
+            accessToken,
+            isAuthenticated: true,
+            isLoading: false,
+          });
 
           // Conectar WebSocket
           socketService.connect(accessToken);
         } catch (error) {
-          set({ isLoading: false });
+          set({ isAuthenticated: false });
           throw error;
+        } finally {
+          set({ isLoading: false });
         }
       },
 
@@ -56,10 +63,14 @@ export const useAuthStore = create<AuthState>()(
             email,
             password,
           });
-          const {  accessToken, user } = response.data;
+          const { accessToken, user } = response.data;
 
-          localStorage.setItem("token", accessToken);
-          set({ user,  accessToken, isAuthenticated: true, isLoading: false });
+          set({
+            user,
+            accessToken,
+            isAuthenticated: true,
+            isLoading: false,
+          });
 
           // Conectar WebSocket
           socketService.connect(accessToken);
@@ -70,19 +81,16 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        localStorage.removeItem("token");
         socketService.disconnect();
-        set({ user: null, accessToken:null, isAuthenticated: false });
+        set({ user: null, accessToken: null, isAuthenticated: false });
       },
 
       checkAuth: async () => {
-        const token = localStorage.getItem("token");
-        
-        const response = await authAPI.verifyToken()
-        
-        const {id} = response.data.userWithoutPassword
+        const token = get().accessToken;
 
-        
+        const response = await authAPI.verifyToken();
+
+        const { id } = response.data.userWithoutPassword;
 
         if (!token) {
           set({ isAuthenticated: false });
@@ -91,22 +99,26 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await authAPI.getMe(id);
-          set({ user: response.data.data, accessToken: token , isAuthenticated: true });
-          
+
+          set({
+            user: response.data.data,
+            accessToken: token,
+            isAuthenticated: true,
+          });
+
           // Conectar WebSocket
           socketService.connect(token);
         } catch (error) {
           localStorage.removeItem("token");
           set({ user: null, accessToken: null, isAuthenticated: false });
-          set({errors: error as string[]})
+          set({ errors: error as string[] });
           console.log(error);
-          
         }
       },
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ token: state.accessToken, user: state.user }),
+      partialize: (state) => ({ accessToken: state.accessToken }),
     }
   )
 );

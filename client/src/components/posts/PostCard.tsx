@@ -69,18 +69,18 @@ const PostCard = ({ post }: PostCardProps) => {
   });
 
   return (
-    <div className="card border border-zinc-800 bg-zinc-100 px-2 py-6 rounded-md">
+    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-zinc-900 from-primary-400 to-primary-600 flex items-center justify-center text-zinc-100 font-semibold">
+          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xl">
             {post.User.username.charAt(0).toUpperCase()}
           </div>
 
           {/* User info */}
           <div>
-            <h3 className="font-semibold text-zinc-900 ">
+            <h3 className="font-semibold text-gray-800">
               {post.User.username}
             </h3>
             <p className="text-sm text-gray-500">{timeAgo}</p>
@@ -92,9 +92,9 @@ const PostCard = ({ post }: PostCardProps) => {
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <MoreVertical className="w-5 h-5 text-zinc-900 " />
+              <MoreVertical className="w-5 h-5 text-gray-600" />
             </button>
 
             {showMenu && (
@@ -104,7 +104,7 @@ const PostCard = ({ post }: PostCardProps) => {
                     setIsEditing(true);
                     setShowMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-zinc-900 "
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
                 >
                   <Edit2 className="w-4 h-4" />
                   Editar
@@ -156,31 +156,31 @@ const PostCard = ({ post }: PostCardProps) => {
             </div>
           </div>
         ) : (
-          <p className="text-zinc-900  whitespace-pre-wrap leading-relaxed">
+          <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
             {post.content}
           </p>
         )}
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-6 pt-4 border-t border-zinc-800">
+      <div className="flex items-center justify-between pt-3 border-t border-gray-200">
         {/* Like */}
         <button
           onClick={handleLike}
-          className={`flex items-center gap-2 transition-colors ${
-            post.liked ? "text-red-500" : "text-zinc-900  hover:text-red-500"
-          } cursor-pointer`}
+          className={`flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors rounded-lg p-2 ${
+            post.liked ? "text-red-500" : ""
+          }`}
         >
-          <Heart className={`w-5 h-5 ${post.liked ? "fill-current" : ""}`} />
+          <Heart className={`w-6 h-6 ${post.liked ? "fill-current" : ""}`} />
           <span className="text-sm font-medium">{post.likesCount}</span>
         </button>
         {/* Comments */}
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-2 text-zinc-900  hover:text-zinc-200 transition-colors cursor-pointer"
+          className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors rounded-lg p-2"
         >
-          <MessageCircle className="w-5 h-5" />
-          <span className="text-sm font-medium text-zinc-800">
+          <MessageCircle className="w-6 h-6" />
+          <span className="text-sm font-medium">
             {commentsCount}
           </span>
         </button>

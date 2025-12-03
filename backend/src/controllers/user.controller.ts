@@ -103,7 +103,7 @@ const login = async (req: Request, res: Response): Promise<Response> => {
     });
 
     return res.json({
-      succes: true,
+      success: true,
       message: "Login exitoso",
       accessToken,
       user: {

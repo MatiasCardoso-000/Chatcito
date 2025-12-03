@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../common/Button";
 import Input from "../common/Input";
+import { useAuthStore } from "../../store/authStore";
 
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+
+
+  const {register} = useAuthStore()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle registration logic here
-    console.log({ username, email, password });
+    register(username,email,password)
   };
 
   return (
@@ -70,7 +73,7 @@ const RegisterForm = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label
               className="block text-gray-400 text-sm font-bold mb-2"
               htmlFor="confirm-password"
@@ -86,7 +89,7 @@ const RegisterForm = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-          </div>
+          </div> */}
           <div className="flex items-center justify-between">
             <Button
               className="w-full bg-linear-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline"

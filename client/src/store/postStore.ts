@@ -104,7 +104,7 @@ export const usePostStore = create<PostState>()(
               return {
                 posts: updatePost,
                 isLoading: false,
-                success: true,
+                success: success,
                 isOwnPost:isOwnPost
               };
             });

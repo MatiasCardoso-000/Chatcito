@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../common/Button";
-import { authAPI } from "../../services/auth";
 import { useAuthStore } from "../../store/authStore";
 
 const LoginForm = () => {
@@ -15,7 +14,7 @@ const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Add login API call here using authAPI
-    login(email, password);
+     login(email, password);
   };
 
   useEffect(() => {

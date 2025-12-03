@@ -42,12 +42,20 @@ const PostList = ({ type }: PostListProps) => {
   //   setPosts(posts.filter((p) => p.id !== postId));
   // };
 
-  if (isLoading) {
+  if (isLoading && posts.length === 0) {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="card animate-pulse">
-            <div className="h-20 bg-gray-200 rounded"></div>
+          <div key={i} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+              <div className="ml-3 flex-1">
+                <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-5/6"></div>
           </div>
         ))}
       </div>
@@ -56,42 +64,54 @@ const PostList = ({ type }: PostListProps) => {
 
   if (posts.length === 0) {
     return (
-      <div className="card text-center py-12">
+      <div className="bg-white rounded-lg shadow-md text-center py-16">
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">
+          Aún no hay publicaciones
+        </h3>
         <p className="text-gray-500">
           {type === "feed"
-            ? "No hay posts en tu feed. ¡Sigue a alguien para ver contenido!"
-            : "No hay posts aún"}
+            ? "Sigue a otros usuarios para ver sus publicaciones aquí."
+            : "Sé el primero en crear una publicación."}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <button
-        className="text-white font-semibold bg-green-400 px-2 rounded-md"
-        onClick={toggleMenu}
-      >
-        Create new post
-      </button>
+    <div className="max-w-2xl mx-auto">
+      {/* Botón para abrir el formulario de creación */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+        <button
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-3 px-4 rounded-full transition-colors"
+          onClick={toggleMenu}
+        >
+          Crea una nueva publicación...
+        </button>
+      </div>
 
+      {/* Formulario de creación (modal o inline) */}
       {showMenu && (
-        <div>
+        <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.target as HTMLFormElement);
               const content = formData.get("content") as string;
-              create(content)
+              if (content.trim()) {
+                create(content);
+                toggleMenu(); // Opcional: cerrar el form después de crear
+              }
             }}
           >
             <textarea
-              placeholder="Que estas pensando?"
+              placeholder="¿Qué estás pensando?"
               name="content"
-              className="w-full p-1 text-black"
+              className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              rows={4}
+              autoFocus
             />
-            <button className="text-white font-semibold bg-blue-400 px-2 rounded-md">
-              Crear
+            <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition-colors disabled:opacity-50">
+              Publicar
             </button>
           </form>
         </div>
@@ -103,7 +123,6 @@ const PostList = ({ type }: PostListProps) => {
             <PostCard
               key={post.id}
               post={post}
-            
             />
           );
         })}
