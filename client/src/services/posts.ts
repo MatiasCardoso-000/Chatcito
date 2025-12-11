@@ -11,14 +11,20 @@ export const postsAPI = {
     );
   },
 
+  getPostsByUsername: (username: string, page = 1, limit = 10) => {
+    return api.get<PaginatedResponse<Post>>(
+      `/posts/user/${username}?page=${page}&limit=${limit}`
+    );
+  },
+
   getPosts: (page = 1, limit = 10) => {
     return api.get<PaginatedResponse<Post>>(
       `/posts/?page=${page}&limit=${limit}`
     );
   },
 
-  getById: (postId: number) => {
-    return api.get<ApiResponse<Post>>(`/posts/${postId}`);
+  getById: (userId: number) => {
+    return api.get<ApiResponse<Post>>(`/posts/${userId}`);
   },
 
   update: (postId: number, content: string) => {

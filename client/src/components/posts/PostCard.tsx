@@ -14,6 +14,7 @@ import type { Post } from "../../types";
 import CommentSection from "./CommentSection";
 import { postsAPI } from "../../services/posts";
 import { usePostStore } from "../../store/postStore";
+import { useAuthStore } from "../../store/authStore";
 
 interface PostCardProps {
   post: Post;
@@ -27,6 +28,8 @@ const PostCard = ({ post }: PostCardProps) => {
   const [editContent, setEditContent] = useState(post.content);
 
   const { update, toggleLike, isLoading, deletePost } = usePostStore();
+
+  const {user} = useAuthStore()
 
   useEffect(() => {
     const handleCommentsCount = async () => {
@@ -62,7 +65,6 @@ const PostCard = ({ post }: PostCardProps) => {
     deletePost(post.id);
   };
 
- 
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
     addSuffix: true,
     locale: es,
@@ -81,7 +83,9 @@ const PostCard = ({ post }: PostCardProps) => {
           {/* User info */}
           <div>
             <h3 className="font-semibold text-gray-800">
-              {post.User.username}
+              {user &&
+                user?.username.slice(0, 1).toUpperCase() +
+                  user?.username.slice(1, user?.username.length)}
             </h3>
             <p className="text-sm text-gray-500">{timeAgo}</p>
           </div>
@@ -180,9 +184,7 @@ const PostCard = ({ post }: PostCardProps) => {
           className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors rounded-lg p-2"
         >
           <MessageCircle className="w-6 h-6" />
-          <span className="text-sm font-medium">
-            {commentsCount}
-          </span>
+          <span className="text-sm font-medium">{commentsCount}</span>
         </button>
       </div>
 

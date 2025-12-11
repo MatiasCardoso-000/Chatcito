@@ -24,6 +24,7 @@ export interface Post {
   timestamp: string;
   avatar: string;
   count:number;
+  postWithUser: string
 }
 
 export interface Comment {
@@ -73,6 +74,7 @@ export interface ApiResponse<T> {
   count:number;
   updatedPost: Post;
   isOwnPost:boolean;
+  postResponse:Post
 }
 
 export interface RefreshTokenResponse {

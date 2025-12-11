@@ -3,6 +3,7 @@ import { LoginPage } from "./pages/Login";
 import { RegisterPage } from "./pages/Register";
 import { Layout } from "./components/layout/Layout";
 import { FeedPage } from "./pages/Feed";
+import {Profile} from "./pages/Profile";
 
 export const App = () => {
   return (
@@ -12,6 +13,7 @@ export const App = () => {
         <Route element={<RegisterPage />} path="/register" />
         <Route element={<Layout />} path="/">
           <Route index element={<FeedPage />} path="/" />
+          <Route element={<Profile />} path="/profile/:username" />
         </Route>
       </Routes>
     </Router>

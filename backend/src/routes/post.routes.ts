@@ -7,6 +7,7 @@ export const router = Router();
 router.post("/", validateToken, postController.createPost);
 router.get("/", validateToken, postController.getPublicPosts);
 router.get("/feed", validateToken, postController.getFeed);
+
 router.get("/:userId", validateToken, postController.getUserPosts);
 router.put("/update/:id", validateToken, postController.updatePost);
 router.delete("/delete/:id", validateToken, postController.deletePost);

@@ -5,17 +5,17 @@ import Dropdown from "../common/Dropdown";
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate("/login")
+    navigate("/login");
   };
 
   const authLinks = (
     <div className="py-1">
       <Link
-        to="/profile"
+        to={`/profile/${user?.username}`}
         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
       >
         Profile
@@ -58,7 +58,12 @@ const Navbar = () => {
           <div>
             <Dropdown content={isAuthenticated ? authLinks : guestLinks}>
               <button className="text-white focus:outline-none">
-                {isAuthenticated ? user?.username : "Menu"}
+                {isAuthenticated && user
+                  ? `${
+                      user?.username.slice(0, 1).toUpperCase() +
+                      user?.username.slice(1, user.username.length)
+                    }`
+                  : "Menu"}
               </button>
             </Dropdown>
           </div>

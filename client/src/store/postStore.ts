@@ -8,6 +8,7 @@ interface PostState {
   success: boolean;
   isLoading: boolean;
   page: number;
+  limit: number;
   hasMore: boolean;
   liked: boolean;
   likesCount: number;
@@ -17,7 +18,7 @@ interface PostState {
   isEditing: boolean;
   editContent: string;
   currentPostId: number;
-  isOwnPost:boolean;
+  isOwnPost: boolean;
   create: (content: string) => Promise<void>;
   getFeed: (page: number, limit: number) => Promise<void>;
   getPublicPosts: (page: number, limit: number) => Promise<void>;
@@ -27,15 +28,17 @@ interface PostState {
   toggleLike: (postId: number) => Promise<void>;
   getCommentsCount: (postId: number) => Promise<void>;
   toggleMenu: () => void;
+  loadMore: () => Promise<void>;
 }
 
 export const usePostStore = create<PostState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       posts: [],
       success: false,
       isLoading: false,
       page: 1,
+      limit: 10,
       hasMore: true,
       liked: false,
       likesCount: 0,
@@ -45,10 +48,19 @@ export const usePostStore = create<PostState>()(
       isEditing: false,
       editContent: "",
       currentPostId: 0,
-      isOwnPost:false,
+      isOwnPost: false,
       create: async (content) => {
+        set({ isLoading: true });
         try {
-          await postsAPI.create(content);
+          const response = await postsAPI.create(content);
+
+          const { success, postResponse } = response.data;
+
+          set({
+            posts: [postResponse, ...get().posts],
+            isLoading: false,
+            success: success,
+          });
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -61,9 +73,11 @@ export const usePostStore = create<PostState>()(
           const response = await postsAPI.getFeed(page, limit);
           const { data, success } = response.data;
 
-          const posts: Post[] = Array.isArray(data) ? data : [];
+          const feed: Post[] = Array.isArray(data) ? data : [];
 
-          set({ posts, success: success, isLoading: false });
+          if (success) {
+            set({ posts: feed, success: success, isLoading: false });
+          }
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -85,17 +99,26 @@ export const usePostStore = create<PostState>()(
         }
       },
 
-      getById: async (_postId) => {
-        // stubbed: implement getById if needed
+      getById: async (userId) => {
+        try {
+          const response = await postsAPI.getById(userId);
+          const { success, data } = response.data;
+
+          const userPosts = Array.isArray(data) ? data : [];
+          set({ posts: userPosts, success: success });
+        } catch (error) {
+          set({ success: false });
+          throw error;
+        }
       },
 
       update: async (postId, content) => {
         try {
           set({ isLoading: true });
           const response = await postsAPI.update(postId, content);
-          const { success, updatedPost,isOwnPost } = response.data;
+          const { success, updatedPost, isOwnPost } = response.data;
           console.log(isOwnPost);
-          
+
           if (success) {
             set((state) => {
               const updatePost = state.posts.map((p) =>
@@ -105,7 +128,7 @@ export const usePostStore = create<PostState>()(
                 posts: updatePost,
                 isLoading: false,
                 success: success,
-                isOwnPost:isOwnPost
+                isOwnPost: isOwnPost,
               };
             });
           } else {
@@ -154,9 +177,18 @@ export const usePostStore = create<PostState>()(
       toggleMenu: () => {
         set((state) => ({ showMenu: !state.showMenu }));
       },
+
+      loadMore: async () => {
+        set((state) => {
+          if (state.posts.length >= state.limit) {
+            get().getFeed(state.page + 1, state.limit);
+          }
+        });
+      },
     }),
     {
       name: "post-storage",
+      partialize: (state) => state.success,
     }
   )
 );

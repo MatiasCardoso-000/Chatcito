@@ -4,9 +4,8 @@ import { Post } from "../models/posts";
 import { Comment } from "../models/comments";
 import { PostLike } from "../models/likes";
 import { Follow } from "../models/follow";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import { sequelize } from "../config/database";
-import { count } from "console";
 
 interface AuthRequest extends Request {
   user?: { id: string };
@@ -17,20 +16,32 @@ const createPost = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const id = req.user?.id;
+    const user_id = req.user?.id;
 
     const { content } = req.body;
-    const post = await Post.create({
+   const newPost =  await Post.create({
       content,
-      user_id: id, // viene del middleware de autenticación
+      user_id // viene del middleware de autenticación
     });
 
-    const newPost = {
-      content: post.get("content"),
-      user_id: post.get("user_id"),
+    const postWithUser = await Post.findByPk(newPost.get("id"), {
+      include: [
+        {
+          model: User,
+          attributes: ["id", "username"],
+        },
+      ],
+    });
+
+    const postResponse = {
+      ...postWithUser?.toJSON(),
+      likesCount: 0,
+      commentsCount: 0,
+      isLikedByUser: false,
+      isOwnPost: true,
     };
 
-    return res.json(newPost);
+    return res.json({ success: true, postResponse });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ message });
@@ -317,7 +328,7 @@ const updatePost = async (
     const updatedPost = await post.save();
     return res.json({
       message: "Post actualizado",
-      isOwnPost : post.get("user_id") === userId,
+      isOwnPost: post.get("user_id") === userId,
       updatedPost,
       success: true,
     });
