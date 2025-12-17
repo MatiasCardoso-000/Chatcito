@@ -34,7 +34,7 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
           <p className="mt-4 text-center text-gray-700">{user?.bio}</p>
         )}
         <label htmlFor="file">
-          <div className="bg-zinc-200 border-white border-2 rounded-full absolute right-3/7 top-3/5 mt-4 w-12 h-12 flex items-center justify-center cursor-pointer">
+          <div className="bg-zinc-200 border-white border-2 rounded-full absolute right-3/7 top-3/5 mr-4 w-12 h-12 flex items-center justify-center cursor-pointer">
             <CameraIcon />
           </div>
         </label>

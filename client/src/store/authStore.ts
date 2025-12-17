@@ -47,8 +47,18 @@ export const useAuthStore = create<AuthState>()(
 
           // Conectar WebSocket
           socketService.connect(accessToken);
-        } catch (error) {
-          set({ isAuthenticated: false });
+        } catch (error: any) {
+          const errorMessage = error.response.data.error;
+
+          if (get().errors.includes(errorMessage)) return;
+
+          set({
+            isAuthenticated: false,
+            errors: [errorMessage, ...get().errors],
+          });
+
+
+
           throw error;
         } finally {
           set({ isLoading: false });

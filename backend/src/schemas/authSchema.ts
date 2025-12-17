@@ -19,8 +19,8 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  username: z
-    .string("Debe proporcionar un nombre de usuario válido")
+  email: z
+    .string("Debe proporcionar un email válido")
     .toLowerCase(),
   password: z.string().min(1, "La contraseña es requerida"),
 });

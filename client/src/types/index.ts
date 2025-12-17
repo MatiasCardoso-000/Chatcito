@@ -7,6 +7,7 @@ export interface User {
   bio?: string;
   profileImage?: string;
   createdAt: string;
+  password:string;
 }
 
 export interface Post {
@@ -63,6 +64,7 @@ export interface AuthResponse {
   success: boolean;
   accessToken: string;
   user: User;
+  error: string
 }
 
 export interface ApiResponse<T> {

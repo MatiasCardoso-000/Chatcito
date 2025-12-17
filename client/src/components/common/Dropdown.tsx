@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 interface DropdownProps {
   children: React.ReactNode;
-  content: React.ReactNode;
+  content?: React.ReactNode;
 }
 
 const Dropdown = ({ children, content }: DropdownProps) => {

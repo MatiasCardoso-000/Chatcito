@@ -1,6 +1,6 @@
 // src/components/posts/PostCard.tsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Heart,
   MessageCircle,
@@ -15,6 +15,8 @@ import CommentSection from "./CommentSection";
 import { postsAPI } from "../../services/posts";
 import { usePostStore } from "../../store/postStore";
 import { useAuthStore } from "../../store/authStore";
+import Dropdown from "../common/Dropdown";
+import { Link } from "react-router-dom";
 
 interface PostCardProps {
   post: Post;
@@ -23,13 +25,16 @@ interface PostCardProps {
 const PostCard = ({ post }: PostCardProps) => {
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showComments, setShowComments] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
 
   const { update, toggleLike, isLoading, deletePost } = usePostStore();
 
-  const {user} = useAuthStore()
+  const { user, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     const handleCommentsCount = async () => {
@@ -76,17 +81,23 @@ const PostCard = ({ post }: PostCardProps) => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xl">
-            {post.User.username.charAt(0).toUpperCase()}
-          </div>
+          <Link to={`/profile/${user?.username}`}>
+            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xl">
+              {post.User.username.charAt(0).toUpperCase()}
+            </div>
+          </Link>
 
           {/* User info */}
           <div>
-            <h3 className="font-semibold text-gray-800">
-              {user &&
-                user?.username.slice(0, 1).toUpperCase() +
-                  user?.username.slice(1, user?.username.length)}
-            </h3>
+            <Link to={`/profile/${user?.username}`}>
+              <h3 className="font-semibold text-gray-800">
+                {user &&
+                  user.id === post.User.id &&
+                  user?.username.slice(0, 1).toUpperCase() +
+                    user?.username.slice(1, user?.username.length)}
+              </h3>
+            </Link>
+
             <p className="text-sm text-gray-500">{timeAgo}</p>
           </div>
         </div>
@@ -94,35 +105,31 @@ const PostCard = ({ post }: PostCardProps) => {
         {/* Menu (solo si es el autor) */}
         {post.isOwnPost && (
           <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            <Dropdown
+              content={
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isLoading}
+                    className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Eliminar
+                  </button>
+                </div>
+              }
             >
               <MoreVertical className="w-5 h-5 text-gray-600" />
-            </button>
-
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setShowMenu(false);
-                  }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Editar
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={isLoading}
-                  className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Eliminar
-                </button>
-              </div>
-            )}
+            </Dropdown>
           </div>
         )}
       </div>
