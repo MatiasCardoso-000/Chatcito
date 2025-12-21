@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import PostCard from "./PostCard";
 import { usePostStore } from "../../store/postStore";
+import { useAuthStore } from "../../store/authStore";
 
 interface PostListProps {
   type: "feed" | "all";
@@ -16,7 +17,8 @@ const PostList = ({ type }: PostListProps) => {
     hasMore,
     showMenu,
     success,
-    loadMore
+    loadMore,
+    reset,
   } = usePostStore();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,10 +34,17 @@ const PostList = ({ type }: PostListProps) => {
     }
   };
 
+  useEffect(() => {
+  
+  },[reset]);
 
   useEffect(() => {
-    getFeed(1,10);
+    getFeed(1, 10);
   }, [getFeed]);
+
+  useEffect(() => {
+    loadMore();
+  }, [loadMore]);
 
   if (isLoading && posts.length === 0) {
     return (
@@ -145,8 +154,14 @@ const PostList = ({ type }: PostListProps) => {
           className="w-full btn btn-secondary text-zinc-900"
           onClick={loadMore}
         >
-          Cargar más
+          {isLoading ? "Cargando..." : "Cargar"}
         </button>
+      )}
+
+      {!hasMore && posts.length > 0 && (
+        <p className="text-zinc-800 text-center">
+          No hay más posts para mostrar
+        </p>
       )}
     </div>
   );

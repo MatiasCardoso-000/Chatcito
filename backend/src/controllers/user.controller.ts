@@ -5,7 +5,8 @@ import { createToken } from "../utils/createToken";
 import { Follow } from "../models/follow";
 import { Post } from "../models/posts";
 import jwt from "jsonwebtoken";
-import { success } from "zod";
+import { includes, set, success } from "zod";
+import { where } from "sequelize";
 interface AuthRequest extends Request {
   user?: { id: string };
 }
@@ -396,6 +397,38 @@ const getFollowing = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
+const update = async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user?.id;
+    const { content } = req.body;
+    const user = await User.findByPk(userId);
+
+    if (Number(userId) !== Number(currentUserId)) {
+      return res
+        .status(400)
+        .json({ error: "No tiene permiso de modificar este usuario" });
+    }
+
+    if (!user) return res.status(404).json({ error: "El usuario no existe" });
+
+    const updatedUser = await User.update(
+      { username: content },
+      {
+        where: {
+          id: currentUserId,
+        },
+      }
+    );
+
+
+    return res.json({ success: true, user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Interno del servidor" });
+  }
+};
+
 const refreshToken = async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.cookies;
@@ -441,7 +474,11 @@ const refreshToken = async (req: Request, res: Response) => {
       profileImage: user.get("profileImage"),
     };
 
-    return res.json({ success: true, userWithoutPassword, accessToken: newAccessToken });
+    return res.json({
+      success: true,
+      userWithoutPassword,
+      accessToken: newAccessToken,
+    });
   } catch (error) {
     console.error("Error al refrescar el token:", error);
     return res
@@ -457,5 +494,6 @@ export const userController = {
   toggleFollow,
   getFollowers,
   getFollowing,
+  update,
   refreshToken,
 };

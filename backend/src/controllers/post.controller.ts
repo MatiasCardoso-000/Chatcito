@@ -19,9 +19,9 @@ const createPost = async (
     const user_id = req.user?.id;
 
     const { content } = req.body;
-   const newPost =  await Post.create({
+    const newPost = await Post.create({
       content,
-      user_id // viene del middleware de autenticación
+      user_id, // viene del middleware de autenticación
     });
 
     const postWithUser = await Post.findByPk(newPost.get("id"), {
@@ -200,7 +200,7 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
-
+    console.log(page);    
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -282,6 +282,7 @@ const getFeed = async (req: AuthRequest, res: Response): Promise<Response> => {
         isOwnPost: postJSON.UserId === userId,
       };
     });
+    console.log(Math.ceil(count / limit));
 
     return res.json({
       success: true,

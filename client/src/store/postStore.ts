@@ -29,6 +29,7 @@ interface PostState {
   getCommentsCount: (postId: number) => Promise<void>;
   toggleMenu: () => void;
   loadMore: () => Promise<void>;
+  reset: () => void;
 }
 
 export const usePostStore = create<PostState>()(
@@ -49,6 +50,7 @@ export const usePostStore = create<PostState>()(
       editContent: "",
       currentPostId: 0,
       isOwnPost: false,
+
       create: async (content) => {
         set({ isLoading: true });
         try {
@@ -179,10 +181,35 @@ export const usePostStore = create<PostState>()(
       },
 
       loadMore: async () => {
-        set((state) => {
-          if (state.posts.length >= state.limit) {
-            get().getFeed(state.page + 1, state.limit);
-          }
+        set({ isLoading: true });
+
+        try {
+          const response = await postsAPI.getFeed(get().page, get().limit);
+          const newPosts: Post[] = Array.isArray(response.data)
+            ? response.data
+            : [];
+
+          const hasMore = newPosts.length >= get().limit;
+
+          set({
+            posts: [...get().posts, ...newPosts],
+            page: get().page + 1,
+            hasMore,
+            isLoading: false,
+          });
+        } catch (error) {
+          console.log(error);
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      reset: () => {
+        set({
+          posts: [...get().posts],
+          page: 1,
+          hasMore: true,
+          isLoading: false,
         });
       },
     }),

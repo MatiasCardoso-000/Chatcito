@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../common/Button";
 import { useAuthStore } from "../../store/authStore";
@@ -18,7 +18,9 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   const onSubmit = async () => {
-    await login(email, password);
+    console.log(email,password);
+    
+     login(email, password);
   };
 
   useEffect(() => {
@@ -27,10 +29,7 @@ const LoginForm = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => LoginErrors);
-    return () => clearTimeout(timer);
-  });
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -82,7 +81,6 @@ const LoginForm = () => {
               placeholder="********"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
 
             {errors.password && (

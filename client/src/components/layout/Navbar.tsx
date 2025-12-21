@@ -1,6 +1,7 @@
 import { useAuthStore } from "../../store/authStore";
 import { Link, useNavigate } from "react-router-dom";
 import Dropdown from "../common/Dropdown";
+import { User2Icon } from "lucide-react";
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -57,7 +58,8 @@ const Navbar = () => {
           </div>
           <div>
             <Dropdown content={isAuthenticated ? authLinks : guestLinks}>
-              <button className="text-white focus:outline-none">
+              <button className="text-white font-bold focus:outline-none flex gap-2">
+              <User2Icon className="border border-white rounded-full"/>
                 {isAuthenticated && user
                   ? `${
                       user?.username.slice(0, 1).toUpperCase() +

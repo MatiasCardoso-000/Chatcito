@@ -19,6 +19,7 @@ interface AuthState {
     password: string
   ) => Promise<void>;
   logout: () => void;
+  update: (userId: number, data: { content: string }) => void;
   checkAuth: () => Promise<void>;
 }
 
@@ -36,6 +37,16 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authAPI.login({ email, password });
 
+          if (response.status !== 200) {
+            set({
+              user: null,
+              accessToken: null,
+              isAuthenticated: false,
+              isLoading: false,
+              errors: [...get().errors, response.data.error],
+            });
+          }
+
           const { user, accessToken } = await response.data;
 
           set({
@@ -47,17 +58,10 @@ export const useAuthStore = create<AuthState>()(
 
           // Conectar WebSocket
           socketService.connect(accessToken);
-        } catch (error: any) {
-          const errorMessage = error.response.data.error;
-
-          if (get().errors.includes(errorMessage)) return;
-
+        } catch (error: unknown) {
           set({
             isAuthenticated: false,
-            errors: [errorMessage, ...get().errors],
           });
-
-
 
           throw error;
         } finally {
@@ -96,34 +100,38 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        const token = get().accessToken;
+        const tokenResponse = await authAPI.verifyToken();
+        const token = tokenResponse.data.accessToken;
 
-        const response = await authAPI.verifyToken();
-
-        const { id } = response.data.userWithoutPassword;
+        const { id } = tokenResponse.data.userWithoutPassword;
 
         if (!token) {
-          set({ isAuthenticated: false });
+          set({ user: null, accessToken: null, isAuthenticated: false });
           return;
         }
 
         try {
           const response = await authAPI.getMe(id);
+          // console.log(response);
 
           set({
             user: response.data.data,
-            accessToken: token,
+            accessToken: token || tokenResponse.data.accessToken,
             isAuthenticated: true,
           });
 
           // Conectar WebSocket
           socketService.connect(token);
         } catch (error) {
-          localStorage.removeItem("token");
           set({ user: null, accessToken: null, isAuthenticated: false });
           set({ errors: error as string[] });
           console.log(error);
         }
+      },
+
+      update: async (userId: number, data: { content: string }) => {
+        const response = await authAPI.update(userId, data);
+        console.log(response);
       },
     }),
     {

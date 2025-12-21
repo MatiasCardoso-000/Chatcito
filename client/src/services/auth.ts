@@ -14,8 +14,12 @@ export const authAPI = {
     return api.post<AuthResponse>("/auth/login", data);
   },
 
-  getMe: (id:number) => { 
+  getMe: (id: number) => {
     return api.get<ApiResponse<User>>(`/auth/users/${id}`);
+  },
+
+  update: (id: number, data: { content: string }) => {
+    return api.put<ApiResponse<User>>(`/auth/users/${id}/update`, data);
   },
 
   verifyToken: () => {
