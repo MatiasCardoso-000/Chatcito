@@ -13,7 +13,6 @@ interface PostState {
   liked: boolean;
   likesCount: number;
   commentsCount: number;
-  showComments: boolean;
   showMenu: boolean;
   isEditing: boolean;
   editContent: string;
@@ -26,8 +25,10 @@ interface PostState {
   update: (postId: number, content: string) => Promise<void>;
   deletePost: (postId: number) => Promise<void>;
   toggleLike: (postId: number) => Promise<void>;
-  getCommentsCount: (postId: number) => Promise<void>;
+  getCommentsCount: (postId: number | null) => Promise<void>;
   toggleMenu: () => void;
+  toggleEdit: () => void;
+  setEditContent: (content: string) => void;
   loadMore: () => Promise<void>;
   reset: () => void;
 }
@@ -44,7 +45,6 @@ export const usePostStore = create<PostState>()(
       liked: false,
       likesCount: 0,
       commentsCount: 0,
-      showComments: false,
       showMenu: false,
       isEditing: false,
       editContent: "",
@@ -119,7 +119,7 @@ export const usePostStore = create<PostState>()(
           set({ isLoading: true });
           const response = await postsAPI.update(postId, content);
           const { success, updatedPost, isOwnPost } = response.data;
-          console.log(isOwnPost);
+        
 
           if (success) {
             set((state) => {
@@ -155,6 +155,7 @@ export const usePostStore = create<PostState>()(
       toggleLike: async (postId) => {
         try {
           const response = await postsAPI.toggleLike(postId);
+
           const { success, liked, likesCount } = response.data;
           if (success) {
             set((state) => {
@@ -173,20 +174,45 @@ export const usePostStore = create<PostState>()(
       },
 
       getCommentsCount: async (postId) => {
-        // stubbed: implement getCommentsCount if needed
-      },
+        try {
+          const response = await postsAPI.getCommentsCount(postId);
+          const { count, success } = response.data;
 
+          if (success) {
+            set((state) => {
+              const updatedComments = state.posts.map((p) => {
+                return p.id === postId ? { ...p, commentsCount: count } : p;
+              });
+              return { posts: updatedComments, success: success };
+            });
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+  
       toggleMenu: () => {
         set((state) => ({ showMenu: !state.showMenu }));
       },
 
+      toggleEdit: () => {
+        set((state) => ({ isEditing: !state.isEditing }));
+      },
+
+      setEditContent: (content: string) => {
+        set({ editContent: content });
+      },
+
       loadMore: async () => {
+        if (get().isLoading || !get().hasMore) return;
         set({ isLoading: true });
 
         try {
-          const response = await postsAPI.getFeed(get().page, get().limit);
-          const newPosts: Post[] = Array.isArray(response.data)
-            ? response.data
+          const response = await postsAPI.getFeed(get().page + 1, get().limit);
+
+          const newPosts: Post[] = Array.isArray(response.data.data)
+            ? response.data.data
             : [];
 
           const hasMore = newPosts.length >= get().limit;
@@ -198,7 +224,6 @@ export const usePostStore = create<PostState>()(
             isLoading: false,
           });
         } catch (error) {
-          console.log(error);
           set({ isLoading: false });
           throw error;
         }

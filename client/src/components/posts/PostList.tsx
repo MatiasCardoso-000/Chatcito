@@ -1,7 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import PostCard from "./PostCard";
 import { usePostStore } from "../../store/postStore";
-import { useAuthStore } from "../../store/authStore";
 
 interface PostListProps {
   type: "feed" | "all";
@@ -18,8 +17,10 @@ const PostList = ({ type }: PostListProps) => {
     showMenu,
     success,
     loadMore,
-    reset,
   } = usePostStore();
+  
+  const observerTarget = useRef(null);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +36,31 @@ const PostList = ({ type }: PostListProps) => {
   };
 
   useEffect(() => {
-  
-  },[reset]);
-
-  useEffect(() => {
     getFeed(1, 10);
   }, [getFeed]);
 
   useEffect(() => {
-    loadMore();
-  }, [loadMore]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const currentObserverTarget = observerTarget.current;
+
+    if (currentObserverTarget) {
+      observer.observe(currentObserverTarget);
+    }
+
+    return () => {
+      if (currentObserverTarget) {
+        observer.unobserve(currentObserverTarget);
+      }
+    };
+  }, [hasMore, isLoading, loadMore]);
 
   if (isLoading && posts.length === 0) {
     return (
@@ -75,7 +91,8 @@ const PostList = ({ type }: PostListProps) => {
         {/* Botón para abrir el formulario de creación */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <button
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-3 px-4 rounded-full transition-colors"
+            className="w-full bg-linear-to-r from-[#396AFC] to-[#2948FF]
+hover:bg-gray-200 text-gray-600 font-semibold py-3 px-4 rounded-full transition-colors"
             onClick={toggleMenu}
           >
             Crea una nueva publicación...
@@ -119,7 +136,8 @@ const PostList = ({ type }: PostListProps) => {
       {/* Botón para abrir el formulario de creación */}
       <div className="bg-white rounded-lg shadow-md p-4 mb-4">
         <button
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-3 px-4 rounded-full transition-colors"
+          className="w-full bg-linear-to-r from-[#396AFC] to-[#2948FF]
+  text-white font-semibold py-3 px-4 rounded-full cursor-pointer"
           onClick={toggleMenu}
         >
           Crea una nueva publicación...
@@ -137,7 +155,7 @@ const PostList = ({ type }: PostListProps) => {
               rows={4}
               autoFocus
             />
-            <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mt-2 transition-colors disabled:opacity-50">
+            <button className="w-full bg-sky-500 text-white font-bold py-2 px-4 rounded-lg mt-2  disabled:opacity-50">
               Publicar
             </button>
           </form>
@@ -150,12 +168,9 @@ const PostList = ({ type }: PostListProps) => {
         })}
 
       {hasMore && (
-        <button
-          className="w-full btn btn-secondary text-zinc-900"
-          onClick={loadMore}
-        >
-          {isLoading ? "Cargando..." : "Cargar"}
-        </button>
+        <p ref={observerTarget} className="w-full text-center  text-zinc-900">
+          {isLoading && "Cargando..."}
+        </p>
       )}
 
       {!hasMore && posts.length > 0 && (
